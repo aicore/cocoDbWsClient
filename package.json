@@ -11,7 +11,8 @@
     "testing",
     "mocha",
     "chai",
-    "coverage"
+    "coverage",
+    "cocoDb"
   ],
   "scripts": {
     "eslint": "npm run lint",
@@ -42,9 +43,9 @@
   "author": "Charly, core.ai",
   "license": "AGPL-3.0-or-later",
   "bugs": {
-    "url": "https://github.com/aicore/template-nodejs/issues"
+    "url": "https://github.com/aicore/cocoDbWsClient/issues"
   },
-  "homepage": "https://github.com/aicore/template-nodejs#readme",
+  "homepage": "https://github.com/aicore/cocoDbWsClient#readme",
   "devDependencies": {
     "@commitlint/cli": "17.0.3",
     "@commitlint/config-conventional": "17.0.3",
