@@ -1,7 +1,7 @@
 {
-  "name": "@aicore/template-nodejs",
-  "version": "1.0.6",
-  "description": "Template for nodejs with unit gulp build, test, coverage, code guardian, github and Other defaults",
+  "name": "@aicore/cocoDbWsClient",
+  "version": "1.0.1",
+  "description": "Websocket client for cocoDb",
   "main": "src/index.js",
   "type": "module",
   "keywords": [
@@ -39,7 +39,7 @@
     "type": "git",
     "url": "git+https://github.com/aicore/template-nodejs.git"
   },
-  "author": "Arun, core.ai",
+  "author": "Charly, core.ai",
   "license": "AGPL-3.0-or-later",
   "bugs": {
     "url": "https://github.com/aicore/template-nodejs/issues"
