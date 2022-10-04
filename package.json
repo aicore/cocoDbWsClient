@@ -58,5 +58,8 @@
     "husky": "8.0.1",
     "mocha": "10.0.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "ws" : "8.9.0",
+    "@aicore/libcommonutils": "1.0.18"
+  }
 }
