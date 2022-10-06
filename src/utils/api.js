@@ -1,5 +1,5 @@
 import {init, sendMessage} from "./client.js";
-import {COCO_DB_FUNCTIONS} from "@aicore/libcommonutils";
+import {COCO_DB_FUNCTIONS, isObject, isString} from "@aicore/libcommonutils";
 
 /**
  * > The function `hello` sends a message to the background script, which in turn sends a message to the content script,
@@ -22,6 +22,13 @@ export function hello() {
  * @returns{Promise<Document>} A promise.
  */
 export function get(tableName, documentId) {
+    if (!isString(tableName)) {
+        throw new Error('Please provide valid table name');
+    }
+    if (!isString(documentId)) {
+        throw new Error('Please provide valid documentId');
+
+    }
     return sendMessage(
         {
             fn: COCO_DB_FUNCTIONS.get,
@@ -38,6 +45,9 @@ export function get(tableName, documentId) {
  * @returns {Promise}A promise.
  */
 export function createTable(tableName) {
+    if (!isString(tableName)) {
+        throw new Error('Please provide valid tableName');
+    }
     return sendMessage(
         {
             fn: COCO_DB_FUNCTIONS.createTable,
@@ -54,6 +64,9 @@ export function createTable(tableName) {
  * @returns {Promise}A promise.
  */
 export function createDb(databaseName) {
+    if (!isString(databaseName)) {
+        throw new Error('Please provide valid databaseName');
+    }
     return sendMessage(
         {
             fn: COCO_DB_FUNCTIONS.createDb,
@@ -69,6 +82,9 @@ export function createDb(databaseName) {
  * @returns {Promise}A promise.
  */
 export function deleteDb(databaseName) {
+    if (!isString(databaseName)) {
+        throw new Error('Please provide valid databaseName');
+    }
     return sendMessage(
         {
             fn: COCO_DB_FUNCTIONS.deleteDb,
@@ -89,6 +105,13 @@ export function deleteDb(databaseName) {
  * @returns A promise.
  */
 export function put(tableName, document) {
+    if (!isString(tableName)) {
+        throw new Error('Please provide valid table name');
+    }
+    if (!isObject(document)) {
+        throw new Error('Please provide valid document');
+
+    }
     return sendMessage(
         {
             fn: COCO_DB_FUNCTIONS.put,
@@ -99,12 +122,127 @@ export function put(tableName, document) {
         });
 }
 
+/**
+ * It creates an index on a table.
+ * @param tableName - The name of the table to create the index on.
+ * @param jsonField - The name of the field in the JSON object that you want to index.
+ * @param dataType - The data type of the index. This can be one of the following:
+ * @param isUnique - true/false
+ * @param isNotNull - If true, the index will be created with the NOT NULL constraint.
+ * @returns A promise.
+ */
+export function createIndex(tableName, jsonField, dataType, isUnique, isNotNull) {
+    return sendMessage(
+        {
+            fn: COCO_DB_FUNCTIONS.createIndex,
+            request: {
+                tableName: tableName,
+                jsonField: jsonField,
+                dataType: dataType,
+                isUnique: isUnique,
+                isNotNull: isNotNull
+            }
+        });
+}
+
+/**
+ * It returns the index of the first element in the array that satisfies the provided testing function.
+ * @param tableName - The name of the table you want to query.
+ * @param queryObject - This is the object that you want to query the table with.
+ */
+export function getFromIndex(tableName, queryObject) {
+    return sendMessage(
+        {
+            fn: COCO_DB_FUNCTIONS.getFromIndex,
+            request: {
+                tableName: tableName,
+                queryObject: queryObject
+            }
+        });
+}
+
+/**
+ * > This function deletes a document from a table
+ * @param tableName - The name of the table you want to delete the document from.
+ * @param documentId - The id of the document to delete.
+ * @returns A promise.
+ */
+/**
+ * > This function deletes a document from a table
+ * @param tableName - The name of the table you want to delete the document from.
+ * @param documentId - The id of the document to delete.
+ * @returns A promise.
+ */
+export function deleteDocument(tableName, documentId) {
+    return sendMessage(
+        {
+            fn: COCO_DB_FUNCTIONS.deleteDocument,
+            request: {
+                tableName: tableName,
+                documentId: documentId
+            }
+        });
+}
+
+/**
+ * > This function deletes a table from the database
+ * @param tableName - The name of the table to delete.
+ * @returns A promise.
+ */
+export function deleteTable(tableName) {
+    return sendMessage(
+        {
+            fn: COCO_DB_FUNCTIONS.deleteTable,
+            request: {
+                tableName: tableName
+            }
+        });
+}
+
+/**
+ * > This function deletes a table from the database
+ * @param tableName - The name of the table to delete.
+ * @returns A promise.
+ */
+export function mathAdd(tableName, documentId, jsonFieldsIncrements) {
+    return sendMessage(
+        {
+            fn: COCO_DB_FUNCTIONS.mathAdd,
+            request: {
+                tableName: tableName,
+                documentId: documentId,
+                jsonFieldsIncrements: jsonFieldsIncrements
+            }
+        });
+}
+
+/**
+ * > Update a document in a table
+ * @param tableName - The name of the table to update the document in.
+ * @param documentId - The id of the document to update.
+ * @param document - The document to be updated.
+ * @returns A promise.
+ */
+export function update(tableName, documentId, document) {
+    return sendMessage(
+        {
+            fn: COCO_DB_FUNCTIONS.update,
+            request: {
+                tableName: tableName,
+                documentId: documentId,
+                document: document
+            }
+        });
+}
+
+
 init('localhost:5000', 'YWxhZGRpbjpvcGVuc2VzYW1l');
 
 async function test() {
 
     const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
     await delay(1000);
+    hello();
     const databaseName = 'test';
     const createDbStatus = await createDb(databaseName);
     console.log(JSON.stringify(createDbStatus));
@@ -121,10 +259,12 @@ async function test() {
 
     const deleteDbStatus = await deleteDb(databaseName);
     console.log(JSON.stringify(deleteDbStatus));
-
+    createDb('@');
 }
 
 async function stressTest() {
+    const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+    await delay(1000);
     const promises = [];
     for (let i = 0; i < 1000000; i++) {
         const promise = hello();
@@ -133,5 +273,7 @@ async function stressTest() {
     await Promise.all(promises);
 
 }
+
+//stressTest();
 
 test();
