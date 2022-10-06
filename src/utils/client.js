@@ -6,6 +6,7 @@ import {COCO_DB_FUNCTIONS} from "@aicore/libcommonutils";
 let client = null;
 const WEBSOCKET_ENDPOINT_COCO_DB = '/ws';
 const ID_TO_RESOLVE_REJECT_MAP = {};
+let id = 0;
 
 export function init(cocoDbServiceEndPoint, authkey) {
     if (!isString(cocoDbServiceEndPoint)) {
@@ -40,7 +41,8 @@ function close() {
 }
 
 function getId() {
-    return crypto.randomBytes(4).toString('hex');
+    id++;
+    return id.toString(16);
 }
 
 export function sendMessage(message) {
