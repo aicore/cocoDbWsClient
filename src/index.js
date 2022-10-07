@@ -30,6 +30,7 @@ export {
     createDb,
     createTable,
     getFromNonIndex,
-    hello
+    hello,
+    update
 
 } from './utils/api.js';

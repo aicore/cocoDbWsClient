@@ -12,7 +12,7 @@ import {
     deleteTable,
     put,
     createIndex, getFromIndex, getFromNonIndex, deleteDocument, update, mathAdd
-} from "../../../src/utils/api.js";
+} from "../../../src/index.js";
 import {__receiveMessage} from "../../../src/utils/client.js";
 
 const expect = chai.expect;
