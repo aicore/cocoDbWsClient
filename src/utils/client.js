@@ -1,6 +1,5 @@
 import {WS} from "./WebSocket.js";
-import {isString, isObject, isStringEmpty} from "@aicore/libcommonutils";
-import {COCO_DB_FUNCTIONS} from "@aicore/libcommonutils";
+import {isString, isObject, isStringEmpty, COCO_DB_FUNCTIONS} from "@aicore/libcommonutils";
 
 let client = null;
 const WEBSOCKET_ENDPOINT_COCO_DB = '/ws';
