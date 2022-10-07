@@ -1,5 +1,5 @@
 import {WS} from "./WebSocket.js";
-import {isString, isObject, isObjectEmpty, isStringEmpty} from "@aicore/libcommonutils";
+import {isString, isObject, isStringEmpty} from "@aicore/libcommonutils";
 import {COCO_DB_FUNCTIONS} from "@aicore/libcommonutils";
 
 let client = null;
@@ -7,17 +7,19 @@ const WEBSOCKET_ENDPOINT_COCO_DB = '/ws';
 const ID_TO_RESOLVE_REJECT_MAP = {};
 let id = 0;
 
-export function init(cocoDbServiceEndPoint, authkey) {
+// @INCLUDE_IN_API_DOCS
+
+export function init(cocoDbServiceEndPoint, authKey) {
     if (isStringEmpty(cocoDbServiceEndPoint)) {
         throw new Error('Please provide valid cocoDbServiceEndPoint');
     }
-    if (isStringEmpty(authkey)) {
+    if (isStringEmpty(authKey)) {
         throw new Error('Please provide valid authKey');
     }
     client = new WS.WebSocket(`ws://${cocoDbServiceEndPoint}${WEBSOCKET_ENDPOINT_COCO_DB}`, {
         perMessageDeflate: false,
         headers: {
-            Authorization: `Basic ${authkey}`
+            Authorization: `Basic ${authKey}`
         }
     });
     client.on('open', function open() {
@@ -28,19 +30,20 @@ export function init(cocoDbServiceEndPoint, authkey) {
         console.log('received: %s', data);
         __receiveMessage(data);
     });
-    client.on('close', function close() {
+    client.on('close', function terminate() {
         console.log('closing connection');
-        for (let id in ID_TO_RESOLVE_REJECT_MAP) {
-            let reject = ID_TO_RESOLVE_REJECT_MAP[id].reject;
+        for (let sequenceNumber in ID_TO_RESOLVE_REJECT_MAP) {
+            let reject = ID_TO_RESOLVE_REJECT_MAP[sequenceNumber].reject;
             reject('connection closed');
-            delete ID_TO_RESOLVE_REJECT_MAP[id];
+            delete ID_TO_RESOLVE_REJECT_MAP[sequenceNumber];
         }
         client = null;
+        id = 0;
     });
 }
 
 export function close() {
-    if(!client){
+    if (!client) {
         return;
     }
     client.terminate();
@@ -51,6 +54,12 @@ function getId() {
     return id.toString(16);
 }
 
+
+/**
+ * It takes a message object, sends it to the server, and returns a promise that resolves when the server responds
+ * @param {Object} message - The message to be sent to the server.
+ * @returns {Promise} A function that returns a promise.
+ */
 export function sendMessage(message) {
     return new Promise(function (resolve, reject) {
         if (!client) {
@@ -65,9 +74,9 @@ export function sendMessage(message) {
             reject('please provide valid function name');
             return;
         }
-        const id = getId();
-        message.id = id;
-        ID_TO_RESOLVE_REJECT_MAP[id] = {
+        const sequenceNumber = getId();
+        message.id = sequenceNumber;
+        ID_TO_RESOLVE_REJECT_MAP[sequenceNumber] = {
             resolve: resolve,
             reject: reject
         };
@@ -75,7 +84,13 @@ export function sendMessage(message) {
     });
 }
 
-//Exported for testing
+/**
+ * Exported for testing
+ *
+ *  Process data from the server and resolves client promises
+ * @param rawData - The raw data received from the server.
+ * @returns A function that takes in a rawData string and returns a boolean.
+ */
 export function __receiveMessage(rawData) {
     const message = JSON.parse(rawData);
 
@@ -96,6 +111,3 @@ export function __receiveMessage(rawData) {
     delete ID_TO_RESOLVE_REJECT_MAP[message.id];
     return true;
 }
-
-
-//close();

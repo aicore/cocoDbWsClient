@@ -1,5 +1,4 @@
 /*global describe, it, beforeEach, afterEach*/
-import * as assert from 'assert';
 import mockedFunctions from "../setupmocks.js";
 import {__receiveMessage, close, init, sendMessage} from "../../../src/utils/client.js";
 import chai from "chai";
@@ -71,7 +70,7 @@ describe('Ut for client', function () {
                     hello: 'world'
                 }
             }));
-        }, 1000);
+        }, 10);
         const response = await sendMessage({
             fn: COCO_DB_FUNCTIONS.hello
         });
