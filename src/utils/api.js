@@ -1,11 +1,18 @@
-import {init, sendMessage,close} from "./client.js";
-import {COCO_DB_FUNCTIONS, isObject, isString} from "@aicore/libcommonutils";
+//import {init, sendMessage, close} from "./client.js";
+import {sendMessage} from "./client.js";
+
+export {init, close} from "./client.js";
+import {COCO_DB_FUNCTIONS, isObjectEmpty, isStringEmpty} from "@aicore/libcommonutils";
+
+// @INCLUDE_IN_API_DOCS
+
 
 /**
  * > The function `hello` sends a message to the background script, which in turn sends a message to the content script,
- * which in turn sends a message to the database script, which in turn sends a message to the database, which in turn sends
- * a message to the database script, which in turn sends a message to the content script, which in turn sends a message to
- * the background script, which in turn sends a message to the function `hello`, which in turn returns the message
+ * which in turn sends a message to the database script, which in turn sends a message to the database, which in turn
+ * sends a message to the database script, which in turn sends a message to the content script, which in turn sends a
+ * message to the background script, which in turn sends a message to the function `hello`, which in turn returns the
+ * message
  * @returns A promise.
  */
 export function hello() {
@@ -15,17 +22,17 @@ export function hello() {
 }
 
 /**
- * `get` is a function that takes two parameters, `tableName` and `documentId`, and returns a promise that resolves to the
- * document with the given `documentId` from the table with the given `tableName`
+ * `get` is a function that takes two parameters, `tableName` and `documentId`, and returns a promise that
+ * resolves to the document with the given `documentId` from the table with the given `tableName`
  * @param {string} tableName - The name of the table you want to get the document from.
  * @param {string} documentId - The document id of the document you want to get.
  * @returns{Promise<Document>} A promise.
  */
 export function get(tableName, documentId) {
-    if (!isString(tableName)) {
+    if (isStringEmpty(tableName)) {
         throw new Error('Please provide valid table name');
     }
-    if (!isString(documentId)) {
+    if (isStringEmpty(documentId)) {
         throw new Error('Please provide valid documentId');
 
     }
@@ -45,7 +52,7 @@ export function get(tableName, documentId) {
  * @returns {Promise}A promise.
  */
 export function createTable(tableName) {
-    if (!isString(tableName)) {
+    if (isStringEmpty(tableName)) {
         throw new Error('Please provide valid tableName');
     }
     return sendMessage(
@@ -60,11 +67,11 @@ export function createTable(tableName) {
 
 /**
  * It creates a database with the name `dataBaseName` and returns a promise
- * @param dataBaseName - The name of the database you want to create.
+ * @param {string} databaseName - The name of the database you want to create.
  * @returns {Promise}A promise.
  */
 export function createDb(databaseName) {
-    if (!isString(databaseName)) {
+    if (isStringEmpty(databaseName)) {
         throw new Error('Please provide valid databaseName');
     }
     return sendMessage(
@@ -78,11 +85,11 @@ export function createDb(databaseName) {
 
 /**
  * It deletes the database.
- * @param <string> dataBaseName - The name of the database you want to delete.
+ * @param {string} databaseName - The name of the database you want to delete.
  * @returns {Promise}A promise.
  */
 export function deleteDb(databaseName) {
-    if (!isString(databaseName)) {
+    if (isStringEmpty(databaseName)) {
         throw new Error('Please provide valid databaseName');
     }
     return sendMessage(
@@ -95,20 +102,17 @@ export function deleteDb(databaseName) {
 }
 
 /**
- * > The `put` function sends a message to the background script, which in turn sends a message to the content script,
- * which in turn sends a message to the page script, which in turn sends a message to the database script, which in turn
- * sends a message to the database, which in turn sends a message to the database script, which in turn sends a message to
- * the page script, which in turn sends a message to the content script, which in turn sends a message to the background
+ * > The `put`  document to cocoDN
  * script, which in turn sends a message to the `put` function, which in turn returns the message
- * @param tableName - The name of the table to put the document into.
- * @param document - The document to be inserted into the database.
- * @returns A promise.
+ * @param {string} tableName - The name of the table to put the document into.
+ * @param {Object}document - The document to be inserted into the database.
+ * @returns{Promise} A promise.
  */
 export function put(tableName, document) {
-    if (!isString(tableName)) {
+    if (isStringEmpty(tableName)) {
         throw new Error('Please provide valid table name');
     }
-    if (!isObject(document)) {
+    if (isObjectEmpty(document)) {
         throw new Error('Please provide valid document');
 
     }
@@ -124,14 +128,25 @@ export function put(tableName, document) {
 
 /**
  * It creates an index on a table.
- * @param tableName - The name of the table to create the index on.
- * @param jsonField - The name of the field in the JSON object that you want to index.
- * @param dataType - The data type of the index. This can be one of the following:
- * @param isUnique - true/false
- * @param isNotNull - If true, the index will be created with the NOT NULL constraint.
- * @returns A promise.
+ * @param {string} tableName - The name of the table to create the index on.
+ * @param {string} jsonField - The name of the field in the JSON object that you want to index.
+ * @param {string} dataType - The data type of the index. This can be one of the following:
+ * @param {boolean} isUnique - true/false
+ * @param {boolean} isNotNull - If true, the index will be created with the NOT NULL constraint.
+ * @returns {Promise} A promise.
  */
 export function createIndex(tableName, jsonField, dataType, isUnique, isNotNull) {
+    if (isStringEmpty(tableName)) {
+        throw new Error('Please provide valid table name');
+    }
+    if (isStringEmpty(jsonField)) {
+        throw new Error('Please provide valid json field');
+
+    }
+    if (isStringEmpty(dataType)) {
+        throw new Error('Please provide valid dataType');
+
+    }
     return sendMessage(
         {
             fn: COCO_DB_FUNCTIONS.createIndex,
@@ -146,11 +161,18 @@ export function createIndex(tableName, jsonField, dataType, isUnique, isNotNull)
 }
 
 /**
- * It returns the index of the first element in the array that satisfies the provided testing function.
- * @param tableName - The name of the table you want to query.
- * @param queryObject - This is the object that you want to query the table with.
+ * It returns list of documents matching the queryObject
+ * @param {string} tableName - The name of the table you want to query.
+ * @param{Object} queryObject - This is the object that you want to query the table with.
+ * @returns {Promise}
  */
 export function getFromIndex(tableName, queryObject) {
+    if (isStringEmpty(tableName)) {
+        throw new Error('Please provide valid table name');
+    }
+    if (isObjectEmpty(queryObject)) {
+        throw new Error('Please provide valid queryObject');
+    }
     return sendMessage(
         {
             fn: COCO_DB_FUNCTIONS.getFromIndex,
@@ -162,18 +184,42 @@ export function getFromIndex(tableName, queryObject) {
 }
 
 /**
- * > This function deletes a document from a table
- * @param tableName - The name of the table you want to delete the document from.
- * @param documentId - The id of the document to delete.
- * @returns A promise.
+ * It returns list of documents matching the queryObject after scanning the COCO DB
+ * @param {string} tableName - The name of the table you want to query.
+ * @param{Object} queryObject - This is the object that you want to query the table with.
+ * @returns {Promise}
  */
+export function getFromNonIndex(tableName, queryObject) {
+    if (isStringEmpty(tableName)) {
+        throw new Error('Please provide valid table name');
+    }
+    if (isObjectEmpty(queryObject)) {
+        throw new Error('Please provide valid queryObject');
+    }
+    return sendMessage(
+        {
+            fn: COCO_DB_FUNCTIONS.getFromNonIndex,
+            request: {
+                tableName: tableName,
+                queryObject: queryObject
+            }
+        });
+}
+
+
 /**
  * > This function deletes a document from a table
- * @param tableName - The name of the table you want to delete the document from.
- * @param documentId - The id of the document to delete.
- * @returns A promise.
+ * @param {string} tableName - The name of the table you want to delete the document from.
+ * @param {string} documentId - The id of the document to delete.
+ * @returns {Promise} A promise.
  */
 export function deleteDocument(tableName, documentId) {
+    if (isStringEmpty(tableName)) {
+        throw new Error('Please provide valid table name');
+    }
+    if (isStringEmpty(documentId)) {
+        throw new Error('Please provide valid documentId');
+    }
     return sendMessage(
         {
             fn: COCO_DB_FUNCTIONS.deleteDocument,
@@ -186,10 +232,13 @@ export function deleteDocument(tableName, documentId) {
 
 /**
  * > This function deletes a table from the database
- * @param tableName - The name of the table to delete.
- * @returns A promise.
+ * @param {string} tableName - The name of the table to delete.
+ * @returns{Promise} A promise.
  */
 export function deleteTable(tableName) {
+    if (isStringEmpty(tableName)) {
+        throw new Error('Please provide valid table Name');
+    }
     return sendMessage(
         {
             fn: COCO_DB_FUNCTIONS.deleteTable,
@@ -199,12 +248,25 @@ export function deleteTable(tableName) {
         });
 }
 
+
 /**
- * > This function deletes a table from the database
- * @param tableName - The name of the table to delete.
- * @returns A promise.
+ * do mathematical addition on given json fields by given values in jsonFieldsIncrements
+ * @param {string} tableName - The name of the table you want to update.
+ * @param {string} documentId - The document id of the document you want to update.
+ * @param {Object} jsonFieldsIncrements - A JSON object with the fields to increment and the amount to
+ * increment them by.
+ * @returns {Promise} A promise.
  */
 export function mathAdd(tableName, documentId, jsonFieldsIncrements) {
+    if (isStringEmpty(tableName)) {
+        throw new Error('Please provide valid table name');
+    }
+    if (isStringEmpty(documentId)) {
+        throw new Error('Please provide valid documentId');
+    }
+    if (isObjectEmpty(jsonFieldsIncrements)) {
+        throw new Error('Please provide valid jsonFieldsIncrements');
+    }
     return sendMessage(
         {
             fn: COCO_DB_FUNCTIONS.mathAdd,
@@ -218,12 +280,21 @@ export function mathAdd(tableName, documentId, jsonFieldsIncrements) {
 
 /**
  * > Update a document in a table
- * @param tableName - The name of the table to update the document in.
- * @param documentId - The id of the document to update.
- * @param document - The document to be updated.
- * @returns A promise.
+ * @param {string} tableName - The name of the table to update the document in.
+ * @param {string} documentId - The id of the document to update.
+ * @param {Object}document - The document to be updated.
+ * @returns {Promise} A promise.
  */
 export function update(tableName, documentId, document) {
+    if (isStringEmpty(tableName)) {
+        throw new Error('Please provide valid table name');
+    }
+    if (isStringEmpty(documentId)) {
+        throw new Error('Please provide valid documentId');
+    }
+    if (isObjectEmpty(document)) {
+        throw new Error('Please provide valid document');
+    }
     return sendMessage(
         {
             fn: COCO_DB_FUNCTIONS.update,
@@ -235,6 +306,7 @@ export function update(tableName, documentId, document) {
         });
 }
 
+/*
 
 init('localhost:5000', 'YWxhZGRpbjpvcGVuc2VzYW1l');
 
@@ -278,3 +350,4 @@ async function stressTest() {
 stressTest();
 
 //test();
+*/
