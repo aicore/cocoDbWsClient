@@ -1,6 +1,5 @@
-import WebSocket from 'ws';
-import {isString, isObject, isObjectEmpty} from "@aicore/libcommonutils";
-import crypto from "crypto";
+import {WS} from "./WebSocket.js";
+import {isString, isObject, isObjectEmpty, isStringEmpty} from "@aicore/libcommonutils";
 import {COCO_DB_FUNCTIONS} from "@aicore/libcommonutils";
 
 let client = null;
@@ -9,35 +8,42 @@ const ID_TO_RESOLVE_REJECT_MAP = {};
 let id = 0;
 
 export function init(cocoDbServiceEndPoint, authkey) {
-    if (!isString(cocoDbServiceEndPoint)) {
+    if (isStringEmpty(cocoDbServiceEndPoint)) {
         throw new Error('Please provide valid cocoDbServiceEndPoint');
     }
-    if (!isString(authkey)) {
-        throw new Error('Please provide valid authKey in name:password format');
+    if (isStringEmpty(authkey)) {
+        throw new Error('Please provide valid authKey');
     }
-    client = new WebSocket(`ws://${cocoDbServiceEndPoint}${WEBSOCKET_ENDPOINT_COCO_DB}`, {
+    client = new WS.WebSocket(`ws://${cocoDbServiceEndPoint}${WEBSOCKET_ENDPOINT_COCO_DB}`, {
         perMessageDeflate: false,
         headers: {
             Authorization: `Basic ${authkey}`
         }
     });
     client.on('open', function open() {
-        /*for (let i = 0; i < 10000; i++) {
-            client.send(JSON.stringify({fn: 'hello'}));
-        }
-         */
         console.log('connected to server');
-
     });
 
     client.on('message', function message(data) {
         console.log('received: %s', data);
-        receiveMessage(data);
+        __receiveMessage(data);
+    });
+    client.on('close', function close() {
+        console.log('closing connection');
+        for (let id in ID_TO_RESOLVE_REJECT_MAP) {
+            let reject = ID_TO_RESOLVE_REJECT_MAP[id].reject;
+            reject('connection closed');
+            delete ID_TO_RESOLVE_REJECT_MAP[id];
+        }
+        client = null;
     });
 }
 
-function close() {
-    client = null;
+export function close() {
+    if(!client){
+        return;
+    }
+    client.terminate();
 }
 
 function getId() {
@@ -47,6 +53,10 @@ function getId() {
 
 export function sendMessage(message) {
     return new Promise(function (resolve, reject) {
+        if (!client) {
+            reject('Please call init before sending message');
+            return;
+        }
         if (!isObject(message)) {
             reject('Please provide valid Object');
             return;
@@ -65,21 +75,26 @@ export function sendMessage(message) {
     });
 }
 
-function receiveMessage(rawData) {
+//Exported for testing
+export function __receiveMessage(rawData) {
     const message = JSON.parse(rawData);
 
     if (!isString(message.id)) {
+        //TODO: Emit metrics
         console.error('Server message does not have an Id');
-        return;
+        return false;
     }
     const requestResolve = ID_TO_RESOLVE_REJECT_MAP[message.id];
     if (!isObject(requestResolve)) {
+        //TODO: Emit metrics
+
         console.error(`Client did not send message with Id ${message.id} to server`);
-        return;
+        return false;
     }
     const response = message.response;
     requestResolve.resolve(response);
     delete ID_TO_RESOLVE_REJECT_MAP[message.id];
+    return true;
 }
 
 

@@ -1,4 +1,4 @@
-import {init, sendMessage} from "./client.js";
+import {init, sendMessage,close} from "./client.js";
 import {COCO_DB_FUNCTIONS, isObject, isString} from "@aicore/libcommonutils";
 
 /**
@@ -266,14 +266,15 @@ async function stressTest() {
     const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
     await delay(1000);
     const promises = [];
-    for (let i = 0; i < 1000000; i++) {
+    for (let i = 0; i < 1000; i++) {
         const promise = hello();
         promises.push(promise);
     }
     await Promise.all(promises);
+    close();
 
 }
 
-//stressTest();
+stressTest();
 
-test();
+//test();
