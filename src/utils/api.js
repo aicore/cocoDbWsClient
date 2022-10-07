@@ -1,4 +1,3 @@
-//import {init, sendMessage, close} from "./client.js";
 import {sendMessage} from "./client.js";
 
 export {init, close} from "./client.js";
@@ -305,49 +304,3 @@ export function update(tableName, documentId, document) {
             }
         });
 }
-
-/*
-
-init('localhost:5000', 'YWxhZGRpbjpvcGVuc2VzYW1l');
-
-async function test() {
-
-    const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-    await delay(1000);
-    hello();
-    const databaseName = 'test';
-    const createDbStatus = await createDb(databaseName);
-    console.log(JSON.stringify(createDbStatus));
-    const tableName = `${databaseName}.customers`;
-    const createTableStatus = await createTable(tableName);
-    console.log(JSON.stringify(createTableStatus));
-
-    const putDocumentStatus = await put(tableName, {
-        hello: 'world'
-    });
-    console.log(JSON.stringify(putDocumentStatus));
-    const getDocumentStatus = await get(tableName, putDocumentStatus.documentId);
-    console.log(JSON.stringify(getDocumentStatus));
-
-    const deleteDbStatus = await deleteDb(databaseName);
-    console.log(JSON.stringify(deleteDbStatus));
-    createDb('@');
-}
-
-async function stressTest() {
-    const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-    await delay(1000);
-    const promises = [];
-    for (let i = 0; i < 1000; i++) {
-        const promise = hello();
-        promises.push(promise);
-    }
-    await Promise.all(promises);
-    close();
-
-}
-
-stressTest();
-
-//test();
-*/
