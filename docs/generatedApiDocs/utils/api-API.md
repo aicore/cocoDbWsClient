@@ -96,7 +96,7 @@ It returns list of documents matching the queryObject after scanning the COCO DB
 ### Parameters
 
 *   `tableName` **[string][1]** The name of the table you want to query.
-*   `queryObject` **[Object][4]** This is the object that you want to query the table with.
+*   `queryObject` **[Object][4]** This is the object that you want to query the table with. (optional, default `{}`)
 
 Returns **[Promise][2]**&#x20;
 

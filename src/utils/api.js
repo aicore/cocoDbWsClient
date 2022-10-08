@@ -188,12 +188,9 @@ export function getFromIndex(tableName, queryObject) {
  * @param{Object} queryObject - This is the object that you want to query the table with.
  * @returns {Promise}
  */
-export function getFromNonIndex(tableName, queryObject) {
+export function getFromNonIndex(tableName, queryObject = {}) {
     if (isStringEmpty(tableName)) {
         throw new Error('Please provide valid table name');
-    }
-    if (isObjectEmpty(queryObject)) {
-        throw new Error('Please provide valid queryObject');
     }
     return sendMessage(
         {

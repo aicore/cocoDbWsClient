@@ -341,7 +341,7 @@ describe('api test for client', function () {
         expect(resp.documents[1].hello).eql('usa');
     });
 
-    it('getFromNonIndex  should fail if jsonField is empty', async function () {
+    it('getFromNonIndex  should fail if table Name is empty', async function () {
         let isExceptionOccurred = false;
         try {
             await getFromNonIndex('', {
@@ -349,18 +349,6 @@ describe('api test for client', function () {
             });
         } catch (e) {
             expect(e.toString()).eql('Error: Please provide valid table name');
-            isExceptionOccurred = true;
-        }
-        expect(isExceptionOccurred).eql(true);
-
-    });
-
-    it('getFromNonIndex  should fail if document datatype is empty', async function () {
-        let isExceptionOccurred = false;
-        try {
-            await getFromNonIndex('x.y', {});
-        } catch (e) {
-            expect(e.toString()).eql('Error: Please provide valid queryObject');
             isExceptionOccurred = true;
         }
         expect(isExceptionOccurred).eql(true);
