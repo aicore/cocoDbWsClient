@@ -1,6 +1,6 @@
 {
   "name": "@aicore/cocoDbWsClient",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Websocket client for cocoDb",
   "main": "src/index.js",
   "type": "module",
@@ -59,7 +59,7 @@
     "mocha": "10.0.0"
   },
   "dependencies": {
-    "ws" : "8.9.0",
+    "ws": "8.9.0",
     "@aicore/libcommonutils": "1.0.18"
   }
 }
