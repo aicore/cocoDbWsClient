@@ -1,5 +1,5 @@
 {
-  "name": "@aicore/cocoDbWsClient",
+  "name": "@aicore/cocodb-ws-Client",
   "version": "1.0.2",
   "description": "Websocket client for cocoDb",
   "main": "src/index.js",
