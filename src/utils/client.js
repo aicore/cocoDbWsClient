@@ -26,7 +26,6 @@ export function init(cocoDbServiceEndPoint, authKey) {
     });
 
     client.on('message', function message(data) {
-        console.log('received: %s', data);
         __receiveMessage(data);
     });
     client.on('close', function terminate() {
