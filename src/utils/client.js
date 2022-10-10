@@ -2,20 +2,26 @@ import {WS} from "./WebSocket.js";
 import {isString, isObject, isStringEmpty, COCO_DB_FUNCTIONS} from "@aicore/libcommonutils";
 
 let client = null;
-const WEBSOCKET_ENDPOINT_COCO_DB = '/ws';
+const WEBSOCKET_ENDPOINT_COCO_DB = '/ws/';
 const ID_TO_RESOLVE_REJECT_MAP = {};
 let id = 0;
 
 // @INCLUDE_IN_API_DOCS
 
+/**
+ * It creates a websocket connection to the cocoDbServiceEndPoint and listens for messages
+ * @param {string} cocoDbServiceEndPoint - The URL of the coco-db service.
+ * @param {string} authKey - The authKey is a base64 encoded string of the username and password.
+ */
 export function init(cocoDbServiceEndPoint, authKey) {
-    if (isStringEmpty(cocoDbServiceEndPoint)) {
+    if (isStringEmpty(cocoDbServiceEndPoint) || !(cocoDbServiceEndPoint.startsWith('ws://')
+        || cocoDbServiceEndPoint.startsWith('wss://'))) {
         throw new Error('Please provide valid cocoDbServiceEndPoint');
     }
     if (isStringEmpty(authKey)) {
         throw new Error('Please provide valid authKey');
     }
-    client = new WS.WebSocket(`ws://${cocoDbServiceEndPoint}${WEBSOCKET_ENDPOINT_COCO_DB}`, {
+    client = new WS.WebSocket(cocoDbServiceEndPoint.trim() + WEBSOCKET_ENDPOINT_COCO_DB, {
         perMessageDeflate: false,
         headers: {
             Authorization: `Basic ${authKey}`
@@ -40,6 +46,10 @@ export function init(cocoDbServiceEndPoint, authKey) {
     });
 }
 
+/**
+ * It closes the connection to the server
+ * @returns The function close() is being returned.
+ */
 export function close() {
     if (!client) {
         return;
@@ -47,6 +57,10 @@ export function close() {
     client.terminate();
 }
 
+/**
+ * It returns a string representation of the next integer in a sequence
+ * @returns {string} A function that increments the id variable and returns the new value as a hexadecimal string.
+ */
 function getId() {
     id++;
     return id.toString(16);

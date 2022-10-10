@@ -10,7 +10,7 @@ describe('Ut for client', function () {
     it('should pass', function () {
         let isExceptionOccurred = false;
         try {
-            init('hello', 'world');
+            init('wss://hello', 'world');
         } catch (e) {
             isExceptionOccurred = true;
         }
@@ -29,7 +29,7 @@ describe('Ut for client', function () {
     it('should fail if authkey not specified', function () {
         let isExceptionOccurred = false;
         try {
-            init('hello', '');
+            init('ws://hello', '');
         } catch (e) {
             expect(e.toString()).eql('Error: Please provide valid authKey');
             isExceptionOccurred = true;
@@ -51,7 +51,7 @@ describe('Ut for client', function () {
     it('sendMessage should throw exception if valid message not specified', async function () {
         let isExceptionOccurred = false;
         try {
-            init('hello', 'world');
+            init('ws://hello', 'world');
             await sendMessage('hello');
         } catch (e) {
             expect(e.toString()).eql('Please provide valid Object');
@@ -61,7 +61,7 @@ describe('Ut for client', function () {
     });
     it('sendMessage should pass', async function () {
 
-        init('hello', 'world');
+        init('wss://hello', 'world');
         setTimeout(() => {
             console.log('Foo bar');
             __receiveMessage(JSON.stringify({
@@ -118,7 +118,7 @@ describe('Ut for client', function () {
     it('close Should Pass', function () {
         let isExceptionOccurred = false;
         try {
-            init('hello','word');
+            init('wss://hello','word');
             close();
         } catch (e) {
             isExceptionOccurred = true;
