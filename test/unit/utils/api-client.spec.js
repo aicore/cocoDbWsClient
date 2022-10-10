@@ -18,7 +18,7 @@ import {__receiveMessage} from "../../../src/utils/client.js";
 const expect = chai.expect;
 describe('api test for client', function () {
     beforeEach(function () {
-        init('localhost', '12314');
+        init('ws://localhost', '12314');
 
     });
     afterEach(function () {
