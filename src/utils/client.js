@@ -44,6 +44,9 @@ export function init(cocoDbServiceEndPoint, authKey) {
         client = null;
         id = 0;
     });
+    client.on('error', function (err) {
+        console.log('error ' + err);
+    });
 }
 
 /**

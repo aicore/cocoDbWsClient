@@ -1,7 +1,9 @@
-import {sendMessage} from "./client.js";
+import {sendMessage, init, close} from "./client.js";
+import http from 'http';
 
 export {init, close} from "./client.js";
 import {COCO_DB_FUNCTIONS, isObjectEmpty, isStringEmpty} from "@aicore/libcommonutils";
+import { io } from "socket.io-client";
 
 // @INCLUDE_IN_API_DOCS
 
@@ -301,3 +303,155 @@ export function update(tableName, documentId, document) {
             }
         });
 }
+
+
+//init('ws://localhost:9001', 'YWxhZGRpbjpvcGVuc2VzYW1l');
+init('ws://localhost:5000', 'YWxhZGRpbjpvcGVuc2VzYW1l');
+
+//init('ws://192.168.68.110:9001', 'YWxhZGRpbjpvcGVuc2VzYW1l');
+//init('ws://192.168.68.110:5000', 'YWxhZGRpbjpvcGVuc2VzYW1l');
+
+async function test() {
+
+    const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+    await delay(1000);
+    await hello();
+    const databaseName = 'test';
+    const createDbStatus = await createDb(databaseName);
+    /* Creating a database called "my_new_db" and then logging the status of the database creation to the console. */
+    console.log(JSON.stringify(createDbStatus));
+    const tableName = `${databaseName}.customers`;
+    const createTableStatus = await createTable(tableName);
+    console.log(JSON.stringify(createTableStatus));
+
+    const putDocumentStatus = await put(tableName, {
+        hello: 'world'
+    });
+    console.log(JSON.stringify(putDocumentStatus));
+    const getDocumentStatus = await get(tableName, putDocumentStatus.documentId);
+    console.log(JSON.stringify(getDocumentStatus));
+
+    const deleteDbStatus = await deleteDb(databaseName);
+    console.log(JSON.stringify(deleteDbStatus));
+    await createDb('@');
+}
+
+async function stressTest() {
+    const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+    await delay(2000);
+    const numberOfOperations = 50000;
+    const promises = [];
+    const start = Date.now();
+    for (let i = 0; i < numberOfOperations; i++) {
+        const promise = hello();
+        promises.push(promise);
+    }
+    await Promise.all(promises);
+
+    const end = Date.now();
+    console.log(`Execution time: ${end - start} ms`);
+    console.log(`OPS: ${numberOfOperations / (end - start) * 1000}`);
+
+
+    close();
+
+}
+
+async function performanceTest() {
+    const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+    await delay(2000);
+    const databaseName = 'test';
+    const createDbStatus = await createDb(databaseName);
+    console.log(JSON.stringify(createDbStatus));
+    const tableName = `${databaseName}.customers`;
+    const createTableStatus = await createTable(tableName);
+    console.log(JSON.stringify(createTableStatus));
+    const putDocumentStatus = await put(tableName, {
+        hello: 'world'
+    });
+    console.log(JSON.stringify(putDocumentStatus));
+    const numberOfOperations = 100000;
+    const promises = [];
+    const start = Date.now();
+    for (let i = 0; i < numberOfOperations; i++) {
+        const promise =  get(tableName, putDocumentStatus.documentId);
+        promises.push(promise);
+
+    }
+
+    await Promise.all(promises);
+
+    const end = Date.now();
+    console.log(`Execution time: ${end - start} ms`);
+    console.log(`OPS: ${numberOfOperations / (end - start) * 1000}`);
+
+    const deleteDbStatus = await deleteDb(databaseName);
+    console.log(JSON.stringify(deleteDbStatus));
+
+    close();
+}
+async function tpsMeter() {
+   // init('wss://dev.db.core.ai', '9ea0a990-917d-4fd9-a8e0-4c3fee64a1a4');
+    const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+    await delay(10000);
+    const databaseName = 'test';
+    const createDbStatus = await createDb(databaseName);
+    console.log(JSON.stringify(createDbStatus));
+    const tableName = `${databaseName}.customers`;
+    const createTableStatus = await createTable(tableName);
+    console.log(JSON.stringify(createTableStatus));
+    const putDocumentStatus = await put(tableName, {
+        hello: 'world'
+    });
+    console.log(JSON.stringify(putDocumentStatus));
+    let maxPendingRequests = 5000, requestsPendingAtATime = 0, TPS = 0;
+    let now = new Date(), lastShownSec = 0;
+    function doOps() {
+        let elapsedMs = new Date() - now;
+        let elapsedSec = Math.round(elapsedMs/1000);
+        let numRequestsPerSlot = 100;
+        if(requestsPendingAtATime < maxPendingRequests){
+            let opsArray = [
+                //get(tableName, putDocumentStatus.documentId),
+                // put(tableName, {
+                //     hello: 'world'
+                // })
+            ];
+            for (let x=0; x<numRequestsPerSlot; x++) {
+                //opsArray.push(hello());
+                opsArray.push(get(tableName, putDocumentStatus.documentId));
+            }
+
+            requestsPendingAtATime+= opsArray.length;
+            for(let i=0;i<opsArray.length;i++) {
+                opsArray[i].then(()=>{
+                    TPS++;
+                    requestsPendingAtATime--;
+                });
+            }
+        }
+        if(lastShownSec !== elapsedSec){
+            process.stdout.write(`\r${elapsedSec} TPS: ${TPS} PendingRequests: ${requestsPendingAtATime}`);
+            TPS = 0;
+            lastShownSec = elapsedSec;
+        }
+    }
+    setInterval(doOps, 0);
+}
+
+
+//const server = http.createServer(requestListener);
+//server.listen(8080);
+//test();
+//stressTest();
+//test();
+//stressTest();
+//tpsMeter();
+
+//test();
+//stressTest();
+//performanceTest();
+tpsMeter();
+//init('ws://localhost:5000/ws', '9ea0a990-917d-4fd9-a8e0-4c3fee64a1a4');
+
+//stressTest();
