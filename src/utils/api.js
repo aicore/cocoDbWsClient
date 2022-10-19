@@ -1,7 +1,7 @@
 import {sendMessage} from "./client.js";
 
 export {init, close} from "./client.js";
-import {COCO_DB_FUNCTIONS, isObjectEmpty, isStringEmpty} from "@aicore/libcommonutils";
+import {COCO_DB_FUNCTIONS, isObjectEmpty, isString, isStringEmpty} from "@aicore/libcommonutils";
 
 // @INCLUDE_IN_API_DOCS
 
@@ -301,3 +301,39 @@ export function update(tableName, documentId, document) {
             }
         });
 }
+
+/**
+ * It queries the database for a given table name and query string.
+ * @param {string} tableName - The name of the table you want to query.
+ * @param {string} queryString - The query string to be executed.
+ * @param {Array<string>}[useIndexForFields=null] - This is an array of fields that you want to use the index for.
+ * @returns {Promise}A promise
+ */
+export function query(tableName, queryString, useIndexForFields = null) {
+    if (isStringEmpty(tableName)) {
+        throw new Error('Please provide valid table name');
+    }
+    if (!isString(queryString) || isStringEmpty(queryString)) {
+        throw new Error('Please provide valid query String');
+    }
+    if (!useIndexForFields) {
+        return sendMessage(
+            {
+                fn: COCO_DB_FUNCTIONS.query,
+                request: {
+                    tableName: tableName,
+                    queryString: queryString
+                }
+            });
+    }
+    return sendMessage(
+        {
+            fn: COCO_DB_FUNCTIONS.query,
+            request: {
+                tableName: tableName,
+                queryString: queryString,
+                useIndexForFields: useIndexForFields
+            }
+        });
+}
+

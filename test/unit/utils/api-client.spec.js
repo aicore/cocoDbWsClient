@@ -14,6 +14,7 @@ import {
     createIndex, getFromIndex, getFromNonIndex, deleteDocument, update, mathAdd
 } from "../../../src/index.js";
 import {__receiveMessage} from "../../../src/utils/client.js";
+import {query} from "../../../src/utils/api.js";
 
 const expect = chai.expect;
 describe('api test for client', function () {
@@ -531,6 +532,65 @@ describe('api test for client', function () {
         }, 10);
         const resp = await promise;
         expect(resp.isSuccess).eql(true);
+    });
+
+
+    it('query  should fail if table name is invalid', async function () {
+        let isExceptionOccurred = false;
+        try {
+            await query('', '$.Age = 100');
+        } catch (e) {
+            expect(e.toString()).eql('Error: Please provide valid table name');
+            isExceptionOccurred = true;
+        }
+        expect(isExceptionOccurred).eql(true);
+
+    });
+    it('query  should fail if query string is empty', async function () {
+        let isExceptionOccurred = false;
+        try {
+            await query('x.y', '');
+        } catch (e) {
+            expect(e.toString()).eql('Error: Please provide valid query String');
+            isExceptionOccurred = true;
+        }
+        expect(isExceptionOccurred).eql(true);
+
+    });
+
+    it('query  should pass for valid inputs', async function () {
+
+        const promise =  query('x.y', 'x.y = 1');
+
+        setTimeout(() => {
+            __receiveMessage(JSON.stringify({
+                id: '1',
+                response: {
+                    isSuccess: true,
+                    documents : []
+                }
+            }));
+        }, 10);
+        const resp = await promise;
+        expect(resp.isSuccess).eql(true);
+        expect(resp.documents.length).eql(0);
+    });
+    it('query  should pass for valid inputs valid index', async function () {
+
+        const promise =  query('x.y', 'x.y = 1', ['x']);
+
+        setTimeout(() => {
+            __receiveMessage(JSON.stringify({
+                id: '1',
+                response: {
+                    isSuccess: true,
+                    documents : []
+                }
+            }));
+        }, 10);
+        const resp = await promise;
+        expect(resp.isSuccess).eql(true);
+        expect(resp.documents.length).eql(0);
     });
 
 });
