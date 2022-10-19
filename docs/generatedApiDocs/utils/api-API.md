@@ -146,6 +146,18 @@ Returns **[Promise][2]** A promise.
 
 Returns **[Promise][2]** A promise.
 
+## query
+
+It queries the database for a given table name and query string.
+
+### Parameters
+
+*   `tableName` **[string][1]** The name of the table you want to query.
+*   `queryString` **[string][1]** The query string to be executed.
+*   `useIndexForFields` **[Array][6]<[string][1]>** This is an array of fields that you want to use the index for. (optional, default `null`)
+
+Returns **[Promise][2]** A promise
+
 [1]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
 
 [2]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise
@@ -155,3 +167,5 @@ Returns **[Promise][2]** A promise.
 [4]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
 
 [5]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
+
+[6]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array

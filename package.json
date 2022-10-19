@@ -59,7 +59,7 @@
     "mocha": "10.0.0"
   },
   "dependencies": {
-    "@aicore/libcommonutils": "1.0.18",
+    "@aicore/libcommonutils": "1.0.19",
     "ws": "8.9.0"
   },
   "optionalDependencies": {
