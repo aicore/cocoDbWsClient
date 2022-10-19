@@ -31,6 +31,7 @@ export {
     createTable,
     getFromNonIndex,
     hello,
-    update
+    update,
+    query
 
 } from './utils/api.js';
