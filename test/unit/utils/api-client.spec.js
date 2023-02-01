@@ -18,12 +18,12 @@ import {query} from "../../../src/utils/api.js";
 
 const expect = chai.expect;
 describe('api test for client', function () {
-    beforeEach(function () {
-        init('ws://localhost', '12314');
+    beforeEach(async function () {
+        await init('ws://localhost', '12314');
 
     });
-    afterEach(function () {
-        close();
+    afterEach(async function () {
+        await close();
 
     });
     it('hello should pass ', async function () {

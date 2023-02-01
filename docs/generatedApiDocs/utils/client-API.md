@@ -2,18 +2,23 @@
 
 ## init
 
-It creates a websocket connection to the cocoDbServiceEndPoint and listens for messages
+Create a connection to the cocoDbServiceEndPoint and listens for messages. The connection will
+be maintained and it will try to automatically re-establish broken connections if there are network issues.
+You need to await on this function before staring to use any db APIs. Any APIs called while the connection is
+not fully setup will throw an error.
 
 ### Parameters
 
 *   `cocoDbServiceEndPoint` **[string][1]** The URL of the coco-db service.
 *   `authKey` **[string][1]** The authKey is a base64 encoded string of the username and password.
 
+Returns **[Promise][2]\<null>** Resolves when the cocodb client is ready to send/receive requests. Never rejects.
+
 ## close
 
-It closes the connection to the server
+Closes the connection to the server. You need to await on this function before you can call init again.
 
-Returns **any** The function close() is being returned.
+Returns **[Promise][2]\<null>** Resolves when the cocodb client is closed and you are free to call init again. Never rejects.
 
 ## getId
 
@@ -27,9 +32,9 @@ It takes a message object, sends it to the server, and returns a promise that re
 
 ### Parameters
 
-*   `message` **[Object][2]** The message to be sent to the server.
+*   `message` **[Object][3]** The message to be sent to the server.
 
-Returns **[Promise][3]** A function that returns a promise.
+Returns **[Promise][2]** A function that returns a promise.
 
 ## \_\_receiveMessage
 
@@ -45,6 +50,6 @@ Returns **any** A function that takes in a rawData string and returns a boolean.
 
 [1]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/String
 
-[2]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
+[2]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise
 
-[3]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise
+[3]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object
