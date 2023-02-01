@@ -22,8 +22,16 @@ function _getBackoffTime() {
 
 // @INCLUDE_IN_API_DOCS
 
-function _setupAndMaintainConnection() {
-    return new Promise((resolve)=>{
+
+/**
+ * Sets up the websocket client and returns a promise that will be resolved when the connection is closed or broken.
+ *
+ * @param {function} connectedCb a callbak that will be executed when a connection is established to db
+ * @return {Promise<null>} promise that will be resolved when the connection is closed/broken/error.
+ * @private
+ */
+function _setupClientAndWaitForClose(connectedCb) {
+    return new Promise(resolve =>{
         client = new WS.WebSocket(cocoDBEndPointURL.trim() + WEBSOCKET_ENDPOINT_COCO_DB, {
             perMessageDeflate: false,
             headers: {
@@ -37,24 +45,12 @@ function _setupAndMaintainConnection() {
             }
             console.log('connected to server');
             client.connectionEstablished = true;
-            _resetBackoffTime();
-            resolve();
+            connectedCb && connectedCb();
         });
 
         client.on('message', function message(data) {
             __receiveMessage(data);
         });
-
-        function _reEstablishConnectionIfNeeded() {
-            if(client.userClosedConnectionCB){
-                const userClosedConnectionCB = client.userClosedConnectionCB;
-                client = cocoDBEndPointURL = cocoAuthKey = null;
-                id = 0;
-                userClosedConnectionCB();
-                return;
-            }
-            setTimeout(_setupAndMaintainConnection, _getBackoffTime());
-        }
 
         function _connectionTerminated(reason) {
             console.log(reason);
@@ -64,15 +60,56 @@ function _setupAndMaintainConnection() {
                 rejectHandler(reason);
                 delete ID_TO_RESOLVE_REJECT_MAP[sequenceNumber];
             }
-            _reEstablishConnectionIfNeeded(client);
+            resolve();
         }
         client.on('close', function () {
+            // https://websockets.spec.whatwg.org/#eventdef-websocket-error
+            // https://stackoverflow.com/questions/40084398/is-onclose-always-called-after-onerror-for-websocket
+            // we do not need to listen for error event as an error event is immediately followed by a close event.
             _connectionTerminated('connection closed');
         });
-        client.on('error', function () {
-            _connectionTerminated('connection error');
-        });
     });
+}
+
+let backoffTimer = null, backoffResolveFn = null;
+function _backoffTimer(timeInMilliSec) {
+    return new Promise(resolve => {
+        backoffResolveFn = resolve;
+        backoffTimer = setTimeout(()=>{
+            backoffTimer = null;
+            backoffResolveFn = null;
+            resolve();
+        }, timeInMilliSec);
+    });
+}
+
+function _cancelBackoffTimer() {
+    if(backoffTimer){
+        clearTimeout(backoffTimer);
+        backoffTimer = null;
+        backoffResolveFn();
+        backoffResolveFn = null;
+    }
+}
+
+async function _setupAndMaintainConnection(firstConnectionCb) {
+    backoffTimer = null;
+    function connected() {
+        _resetBackoffTime();
+        if(firstConnectionCb){
+            firstConnectionCb();
+            firstConnectionCb = null;
+        }
+    }
+    while(!client || !client.userClosedConnection){
+        await _setupClientAndWaitForClose(connected);
+        if(!client || !client.userClosedConnection){
+            await _backoffTimer(_getBackoffTime());
+        }
+    }
+    client.userClosedConnectionCB && client.userClosedConnectionCB();
+    client = cocoDBEndPointURL = cocoAuthKey = null;
+    id = 0;
 }
 
 /**
@@ -98,7 +135,9 @@ export function init(cocoDbServiceEndPoint, authKey) {
     }
     cocoDBEndPointURL = cocoDbServiceEndPoint;
     cocoAuthKey = authKey;
-    return _setupAndMaintainConnection();
+    return new Promise(resolve => {
+        _setupAndMaintainConnection(resolve);
+    });
 }
 
 /**
@@ -117,9 +156,11 @@ export function close() {
         return currentClient.closePromise;
     }
     currentClient.closePromise = new Promise((resolve)=>{
+        currentClient.userClosedConnection = true;
         currentClient.userClosedConnectionCB = function () {
             resolve();
         };
+        _cancelBackoffTimer(); // this is for if the connection is broken and, we are retrying the connection
         currentClient.terminate();
     });
     return currentClient.closePromise;
