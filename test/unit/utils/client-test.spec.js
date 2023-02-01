@@ -7,6 +7,10 @@ import {COCO_DB_FUNCTIONS} from "@aicore/libcommonutils";
 const expect = chai.expect;
 
 describe('Ut for client', function () {
+    afterEach(async function () {
+        await close();
+
+    });
     it('should pass', function () {
         let isExceptionOccurred = false;
         try {
@@ -39,6 +43,7 @@ describe('Ut for client', function () {
     it('sendMessage should throw exception if valid function not specified', async function () {
         let isExceptionOccurred = false;
         try {
+            await init('wss://hello', 'world');
             await sendMessage({
                 hello: 'world'
             });
@@ -51,7 +56,7 @@ describe('Ut for client', function () {
     it('sendMessage should throw exception if valid message not specified', async function () {
         let isExceptionOccurred = false;
         try {
-            init('ws://hello', 'world');
+            await init('ws://hello', 'world');
             await sendMessage('hello');
         } catch (e) {
             expect(e.toString()).eql('Please provide valid Object');
@@ -61,7 +66,7 @@ describe('Ut for client', function () {
     });
     it('sendMessage should pass', async function () {
 
-        init('wss://hello', 'world');
+        await init('wss://hello', 'world');
         setTimeout(() => {
             console.log('Foo bar');
             __receiveMessage(JSON.stringify({
