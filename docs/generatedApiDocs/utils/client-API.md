@@ -12,7 +12,8 @@ not fully setup will throw an error.
 *   `cocoDbServiceEndPoint` **[string][1]** The URL of the coco-db service.
 *   `authKey` **[string][1]** The authKey is a base64 encoded string of the username and password.
 
-Returns **[Promise][2]\<null>** Resolves when the cocodb client is ready to send/receive requests. Never rejects.
+Returns **[Promise][2]\<null>** Resolves when the cocodb client is ready to send/receive requests for the first time.
+Rejects only if the user calls `close` API before any connection is established.
 
 ## close
 

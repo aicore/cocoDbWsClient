@@ -39,10 +39,6 @@ function _setupClientAndWaitForClose(connectedCb) {
             }
         });
         client.on('open', function open() {
-            if(!client) {
-                console.log('client closed before server connected.');
-                return;
-            }
             console.log('connected to server');
             client.connectionEstablished = true;
             connectedCb && connectedCb();
@@ -84,6 +80,7 @@ function _backoffTimer(timeInMilliSec) {
 }
 
 function _cancelBackoffTimer() {
+    _resetBackoffTime();
     if(backoffTimer){
         clearTimeout(backoffTimer);
         backoffTimer = null;
@@ -92,12 +89,12 @@ function _cancelBackoffTimer() {
     }
 }
 
-async function _setupAndMaintainConnection(firstConnectionCb) {
+async function _setupAndMaintainConnection(firstConnectionCb, neverConnectedCB) {
     backoffTimer = null;
     function connected() {
         _resetBackoffTime();
         if(firstConnectionCb){
-            firstConnectionCb();
+            firstConnectionCb("connected");
             firstConnectionCb = null;
         }
     }
@@ -110,6 +107,9 @@ async function _setupAndMaintainConnection(firstConnectionCb) {
     client.userClosedConnectionCB && client.userClosedConnectionCB();
     client = cocoDBEndPointURL = cocoAuthKey = null;
     id = 0;
+    if(neverConnectedCB){
+        neverConnectedCB(new Error("user Cancelled"));
+    }
 }
 
 /**
@@ -120,7 +120,8 @@ async function _setupAndMaintainConnection(firstConnectionCb) {
  *
  * @param {string} cocoDbServiceEndPoint - The URL of the coco-db service.
  * @param {string} authKey - The authKey is a base64 encoded string of the username and password.
- * @return {Promise<null>} Resolves when the cocodb client is ready to send/receive requests. Never rejects.
+ * @return {Promise<null>} Resolves when the cocodb client is ready to send/receive requests for the first time.
+ * Rejects only if the user calls `close` API before any connection is established.
  */
 export function init(cocoDbServiceEndPoint, authKey) {
     if(client) {
@@ -135,8 +136,8 @@ export function init(cocoDbServiceEndPoint, authKey) {
     }
     cocoDBEndPointURL = cocoDbServiceEndPoint;
     cocoAuthKey = authKey;
-    return new Promise(resolve => {
-        _setupAndMaintainConnection(resolve);
+    return new Promise((resolve, reject) => {
+        _setupAndMaintainConnection(resolve, reject);
     });
 }
 
