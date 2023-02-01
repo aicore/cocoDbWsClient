@@ -2,33 +2,74 @@
 WebSocket client for cocoDb. This will client can pipeline the requests to increase through put connection
 
 ## Code Guardian
-[![<app> build verification](https://github.com/aicore/template-nodejs/actions/workflows/build_verify.yml/badge.svg)](https://github.com/aicore/template-nodejs/actions/workflows/build_verify.yml)
+[![<app> build verification](https://github.com/aicore/cocoDbWsClient/actions/workflows/build_verify.yml/badge.svg)](https://github.com/aicore/template-nodejs/actions/workflows/build_verify.yml)
 
-<a href="https://sonarcloud.io/summary/new_code?id=aicore_template-nodejs-ts">
-  <img src="https://sonarcloud.io/api/project_badges/measure?project=aicore_template-nodejs-ts&metric=alert_status" alt="Sonar code quality check" />
-  <img src="https://sonarcloud.io/api/project_badges/measure?project=aicore_template-nodejs-ts&metric=security_rating" alt="Security rating" />
-  <img src="https://sonarcloud.io/api/project_badges/measure?project=aicore_template-nodejs-ts&metric=vulnerabilities" alt="vulnerabilities" />
-  <img src="https://sonarcloud.io/api/project_badges/measure?project=aicore_template-nodejs-ts&metric=coverage" alt="Code Coverage" />
-  <img src="https://sonarcloud.io/api/project_badges/measure?project=aicore_template-nodejs-ts&metric=bugs" alt="Code Bugs" />
-  <img src="https://sonarcloud.io/api/project_badges/measure?project=aicore_template-nodejs-ts&metric=reliability_rating" alt="Reliability Rating" />
-  <img src="https://sonarcloud.io/api/project_badges/measure?project=aicore_template-nodejs-ts&metric=sqale_rating" alt="Maintainability Rating" />
-  <img src="https://sonarcloud.io/api/project_badges/measure?project=aicore_template-nodejs-ts&metric=ncloc" alt="Lines of Code" />
-  <img src="https://sonarcloud.io/api/project_badges/measure?project=aicore_template-nodejs-ts&metric=sqale_index" alt="Technical debt" />
+<a href="https://sonarcloud.io/summary/new_code?id=aicore_cocoDbWsClient">
+  <img src="https://sonarcloud.io/api/project_badges/measure?project=aicore_cocoDbWsClient&metric=alert_status" alt="Sonar code quality check" />
+  <img src="https://sonarcloud.io/api/project_badges/measure?project=aicore_cocoDbWsClient&metric=security_rating" alt="Security rating" />
+  <img src="https://sonarcloud.io/api/project_badges/measure?project=aicore_cocoDbWsClient&metric=vulnerabilities" alt="vulnerabilities" />
+  <img src="https://sonarcloud.io/api/project_badges/measure?project=aicore_cocoDbWsClient&metric=coverage" alt="Code Coverage" />
+  <img src="https://sonarcloud.io/api/project_badges/measure?project=aicore_cocoDbWsClient&metric=bugs" alt="Code Bugs" />
+  <img src="https://sonarcloud.io/api/project_badges/measure?project=aicore_cocoDbWsClient&metric=reliability_rating" alt="Reliability Rating" />
+  <img src="https://sonarcloud.io/api/project_badges/measure?project=aicore_cocoDbWsClient&metric=sqale_rating" alt="Maintainability Rating" />
+  <img src="https://sonarcloud.io/api/project_badges/measure?project=aicore_cocoDbWsClient&metric=ncloc" alt="Lines of Code" />
+  <img src="https://sonarcloud.io/api/project_badges/measure?project=aicore_cocoDbWsClient&metric=sqale_index" alt="Technical debt" />
 </a>
 
+## Installing the library
 
-# TODOs after template use
-## !!!Please see all issues in the generated repository as an issue will be generated tracking the fix of each of the below items.  
-1. Update package.json with your app defaults
-2. Check Build actions on pull requests.
-3. create a home page in wiki by going to wiki link https://github.com/<your_org>/<your_repo>/wiki
-4. Goto github `repository` > `settings`> and uncheck `Allow merge commits`. this is usually automatically done by code guardian bots in core.ai org. so you may just need to verify it.
-5. In sonar cloud, enable Automatic analysis from `Administration
-   Analysis Method` for the first time before a pull request is raised: ![image](https://user-images.githubusercontent.com/5336369/148695840-65585d04-5e59-450b-8794-54ca3c62b9fe.png)
-6. Check codacy runs on pull requests, set codacy defaults. You may remove codacy if sonar cloud is only needed.
-7. Update the above Code Guardian badges; change all `id=aicore_template-nodejs-ts` to the sonar id of your project fields. see this PR: https://github.com/aicore/libcache/pull/13
+```bash
+npm install @aicore/cocodb-ws-client
+```
 
-# Commands available
+## importing in your js file
+
+```js
+import * as coco from "@aicore/cocodb-ws-client"; // to import all functions
+```
+
+## Initializing the client
+
+Create a connection to the cocoDbServiceEndPoint and listens for messages. The connection will
+be maintained and it will try to automatically re-establish broken connections if there are network issues.
+You need to await on this function before staring to use any db APIs. Any APIs called while the connection is
+not fully setup will throw an error.
+
+### Parameters
+
+*   `cocoDbServiceEndPoint` **\[string]\[1]** The URL of the coco-db service.
+*   `authKey` **\[string]\[1]** The authKey is a base64 encoded string of the username and password.
+
+Returns **\[Promise]\[2]\<null>** Resolves when the cocodb client is ready to send/receive requests for the first time.
+Rejects only if the user calls `close` API before any connection is established.
+
+```js
+await db.init("ws://endpoint.coco", "your_auth_key");
+```
+
+## Detailed API Docs
+
+See this wiki for detailed API docs
+
+*   [https://github.com/aicore/cocoDbWsClient/wiki/api-API][1]
+*   More coco lib level detailed docs can be found at [https://github.com/aicore/libmysql/wiki/db-API][2]
+
+## close the client
+
+Closes the connection to the server. You need to await on this function before you can call init again.
+
+Returns **\[Promise]\[2]\<null>** Resolves when the cocodb client is closed and you are free to call init again. Never rejects.
+
+```js
+await db.close();
+```
+
+[1]: https://github.com/aicore/cocoDbWsClient/wiki/api-API
+
+[2]: https://github.com/aicore/libmysql/wiki/db-API
+
+
+# Development notes
 
 ## Building
 Since this is a pure JS template project, build command just runs test with coverage.
