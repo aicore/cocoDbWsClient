@@ -6,10 +6,18 @@ import {COCO_DB_FUNCTIONS} from "@aicore/libcommonutils";
 
 const expect = chai.expect;
 
+let savedSetTimeoutFn = global.setTimeout;
+function _awaits(timeMs) {
+    return new Promise(resolve =>{
+        savedSetTimeoutFn(resolve, timeMs);
+    });
+}
+
 describe('Ut for client', function () {
     afterEach(async function () {
         await close();
-
+        mockedFunctions.wsEvents.raiseOpenEventOnCreate = true;
+        global.setTimeout = savedSetTimeoutFn;
     });
     it('should pass', function () {
         let isExceptionOccurred = false;
@@ -97,7 +105,7 @@ describe('Ut for client', function () {
     it('sendMessage should fail with out init', async function () {
         let isExceptionOccurred = false;
         try {
-            close();
+            await close();
             const response = await sendMessage({
                 fn: COCO_DB_FUNCTIONS.hello
             });
@@ -110,21 +118,33 @@ describe('Ut for client', function () {
         }
         expect(isExceptionOccurred).eql(true);
     });
-    it('close Should Pass', function () {
+    it('close Should Pass', async function () {
         let isExceptionOccurred = false;
         try {
-            close();
+            await close();
         } catch (e) {
             isExceptionOccurred = true;
 
         }
         expect(isExceptionOccurred).eql(false);
     });
-    it('close Should Pass', function () {
+    it('init should retry connection on error', async function () {
         let isExceptionOccurred = false;
         try {
-            init('wss://hello','word');
-            close();
+            mockedFunctions.wsEvents.raiseOpenEventOnCreate = false;
+            let timeout;
+            global.setTimeout = function (cb, timeoutms) {
+                timeout = timeoutms;
+                cb();
+            };
+            let initPromise = init('wss://hello', 'word');
+            await _awaits(10);
+            mockedFunctions.wsEvents.close();// fake close
+            await _awaits(10);
+            expect(timeout).to.eql(1);
+            mockedFunctions.wsEvents.open();
+            await initPromise;
+            await close();
         } catch (e) {
             isExceptionOccurred = true;
 
@@ -132,4 +152,43 @@ describe('Ut for client', function () {
         expect(isExceptionOccurred).eql(false);
     });
 
+    let mockTimeout;
+    async function _mockConnectionClose(backoffArray) {
+        for(let i=0; i<backoffArray.length; i++){
+            mockedFunctions.wsEvents.close();// fake close
+            await _awaits(10);
+            expect(mockTimeout).to.eql(backoffArray[i]);
+        }
+    }
+
+    it('init should retry connection with backoff', async function () {
+        let isExceptionOccurred = false;
+        try {
+            mockedFunctions.wsEvents.raiseOpenEventOnCreate = false;
+            global.setTimeout = function (cb, timeoutms) {
+                mockTimeout = timeoutms;
+                cb();
+            };
+            let initPromise = init('wss://hello', 'word');
+            await _awaits(10);
+            await _mockConnectionClose([1, 500, 1000, 3000, 5000, 10000, 20000, 20000, 20000]);
+
+            mockedFunctions.wsEvents.open();
+            await _awaits(10);
+            // after connection is open, the backoff timers should reset
+            await _mockConnectionClose([1, 500, 1000, 3000]); // smaller backoff
+
+            mockedFunctions.wsEvents.open();
+            await _awaits(10);
+            // after connection is open, the backoff timers should reset again
+            await _mockConnectionClose([1, 500, 1000]);
+
+            await initPromise;
+            await close();
+        } catch (e) {
+            isExceptionOccurred = true;
+
+        }
+        expect(isExceptionOccurred).eql(false);
+    });
 });

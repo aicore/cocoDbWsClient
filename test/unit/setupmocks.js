@@ -1,7 +1,6 @@
 import {WS} from "../../src/utils/WebSocket.js";
 
 let setupDone = false;
-let close = null, open = null;
 let mockedFunctions = {
     WS: class WebSocket {
         constructor() {
@@ -10,22 +9,25 @@ let mockedFunctions = {
 
         on(event, callback) {
             if(event ==='close'){
-                close = callback;
+                mockedFunctions.wsEvents.close = callback;
             } else if(event ==='open'){
-                open = callback;
-                setTimeout(open, 10);
+                mockedFunctions.wsEvents.open = callback;
+                if(mockedFunctions.wsEvents.raiseOpenEventOnCreate){
+                    setTimeout(mockedFunctions.wsEvents.open, 10);
+                }
             }
         }
 
         send(message) {
             console.log(message);
-
         }
 
         terminate() {
-            close();
-
+            mockedFunctions.wsEvents.close();
         }
+    },
+    wsEvents: {
+        raiseOpenEventOnCreate: true
     }
 
 };
