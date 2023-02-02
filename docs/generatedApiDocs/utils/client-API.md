@@ -3,9 +3,16 @@
 ## init
 
 Create a connection to the cocoDbServiceEndPoint and listens for messages. The connection will
-be maintained and it will try to automatically re-establish broken connections if there are network issues.
+be maintained and, it will try to automatically re-establish broken connections if there are network issues.
 You need to await on this function before staring to use any db APIs. Any APIs called while the connection is
 not fully setup will throw an error.
+
+## Hibernation after inactivity
+
+After around 10 seconds of no send activity and if there are no outstanding requests, the db connection will be
+dropped and the client move into a hibernation state. The connection will be immediately re-established on any
+db activity transparently, though a slight jitter may be observed during the connection establishment time. This
+auto start-stop will save database resources as servers can be on for months on end.
 
 ### Parameters
 

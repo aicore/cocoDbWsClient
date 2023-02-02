@@ -3,11 +3,15 @@ import {isString, isObject, isStringEmpty, COCO_DB_FUNCTIONS} from "@aicore/libc
 
 let client = null,
     cocoDBEndPointURL = null,
-    cocoAuthKey = null;
+    cocoAuthKey = null,
+    hibernateTimer = null,
+    pendingSendMessages = [];
+const MAX_PENDING_SEND_BUFFER_SIZE = 2000;
 const WEBSOCKET_ENDPOINT_COCO_DB = '/ws/';
 const ID_TO_RESOLVE_REJECT_MAP = new Map();
 const CONNECT_BACKOFF_TIME_MS = [1, 500, 1000, 3000, 5000, 10000, 20000];
-let id = 0;
+const INACTIVITY_TIME_FOR_HIBERNATE = 8000;
+let id = 0, activityInHibernateInterval = 0;
 
 let currentBackoffIndex = 0;
 function _resetBackoffTime() {
@@ -22,6 +26,40 @@ function _getBackoffTime() {
 
 // @INCLUDE_IN_API_DOCS
 
+
+function _checkActivityForHibernation() {
+    if(activityInHibernateInterval > 0){
+        activityInHibernateInterval = 0;
+        return;
+    }
+    if(!client || client.hibernating
+        || ID_TO_RESOLVE_REJECT_MAP.size > 0){ // if there are any pending responses, we cant hibernate
+        return;
+    }
+    // hibernate
+    client.hibernating = true;
+    client.hibernatingPromise = new Promise((resolve=>{
+        client.hibernatingPromiseResolve = resolve;
+    }));
+    client.terminate();
+}
+
+/**
+ * returns a promise that resolves when hibernation ends.
+ * @return {Promise<unknown>}
+ * @private
+ */
+function _toAwakeFromHibernate() {
+    return client.hibernatingPromise;
+}
+
+function _wakeupHibernatingClient() {
+    if(client.hibernatingPromiseResolved) {
+        return;
+    }
+    client.hibernatingPromiseResolve();
+    client.hibernatingPromiseResolved = true;
+}
 
 /**
  * Sets up the websocket client and returns a promise that will be resolved when the connection is closed or broken.
@@ -42,6 +80,7 @@ function _setupClientAndWaitForClose(connectedCb) {
             console.log('connected to server');
             client.connectionEstablished = true;
             connectedCb && connectedCb();
+            _sendPendingMessages();
         });
 
         client.on('message', function message(data) {
@@ -95,15 +134,26 @@ async function _setupAndMaintainConnection(firstConnectionCb, neverConnectedCB) 
         if(firstConnectionCb){
             firstConnectionCb("connected");
             firstConnectionCb = null;
+            // setup hibernate timer on first connection
+            activityInHibernateInterval = 1;
+            hibernateTimer = setInterval(_checkActivityForHibernation, INACTIVITY_TIME_FOR_HIBERNATE);
         }
     }
     while(!client || !client.userClosedConnection){
         await _setupClientAndWaitForClose(connected);
+        if(client && client.hibernating && !client.userClosedConnection){
+            await _toAwakeFromHibernate();
+            continue;
+        }
         if(!client || !client.userClosedConnection){
             await _backoffTimer(_getBackoffTime());
         }
     }
-    client.userClosedConnectionCB && client.userClosedConnectionCB();
+    if(hibernateTimer){
+        clearInterval(hibernateTimer);
+        hibernateTimer = null;
+    }
+    client && client.userClosedConnectionCB && client.userClosedConnectionCB();
     client = cocoDBEndPointURL = cocoAuthKey = null;
     id = 0;
     if(neverConnectedCB){
@@ -113,9 +163,15 @@ async function _setupAndMaintainConnection(firstConnectionCb, neverConnectedCB) 
 
 /**
  * Create a connection to the cocoDbServiceEndPoint and listens for messages. The connection will
- * be maintained and it will try to automatically re-establish broken connections if there are network issues.
+ * be maintained and, it will try to automatically re-establish broken connections if there are network issues.
  * You need to await on this function before staring to use any db APIs. Any APIs called while the connection is
  * not fully setup will throw an error.
+ *
+ * ## Hibernation after inactivity
+ * After around 10 seconds of no send activity and if there are no outstanding requests, the db connection will be
+ * dropped and the client move into a hibernation state. The connection will be immediately re-established on any
+ * db activity transparently, though a slight jitter may be observed during the connection establishment time. This
+ * auto start-stop will save database resources as servers can be on for months on end.
  *
  * @param {string} cocoDbServiceEndPoint - The URL of the coco-db service.
  * @param {string} authKey - The authKey is a base64 encoded string of the username and password.
@@ -161,7 +217,11 @@ export function close() {
             resolve();
         };
         _cancelBackoffTimer(); // this is for if the connection is broken and, we are retrying the connection
-        currentClient.terminate();
+        if(currentClient.hibernating){
+            _wakeupHibernatingClient();
+        } else {
+            currentClient.terminate();
+        }
     });
     return currentClient.closePromise;
 }
@@ -175,6 +235,39 @@ function getId() {
     return id.toString(16);
 }
 
+function _sendMessage(message, resolve, reject) {
+    if (!client) {
+        reject('Please call init before sending message');
+        return;
+    }
+    if (!client.connectionEstablished) {
+        reject('Db connection is not ready, please retry in some time');
+        return;
+    }
+    if (!isObject(message)) {
+        reject('Please provide valid Object');
+        return;
+    }
+    if (!isString(message.fn) || !(message.fn in COCO_DB_FUNCTIONS)) {
+        reject('please provide valid function name');
+        return;
+    }
+    const sequenceNumber = getId();
+    message.id = sequenceNumber;
+    ID_TO_RESOLVE_REJECT_MAP.set(sequenceNumber, {
+        resolve: resolve,
+        reject: reject
+    });
+    activityInHibernateInterval++;
+    client.send(JSON.stringify(message));
+}
+
+function _sendPendingMessages() {
+    for(let entry of pendingSendMessages){
+        _sendMessage(entry.message, entry.resolve, entry.reject);
+    }
+    pendingSendMessages = [];
+}
 
 /**
  * It takes a message object, sends it to the server, and returns a promise that resolves when the server responds
@@ -183,29 +276,16 @@ function getId() {
  */
 export function sendMessage(message) {
     return new Promise(function (resolve, reject) {
-        if (!client) {
-            reject('Please call init before sending message');
-            return;
+        if(client&& client.hibernating){
+            if(pendingSendMessages.length > MAX_PENDING_SEND_BUFFER_SIZE){
+                reject('Too many requests sent while waking up from hibernation');
+                return;
+            }
+            pendingSendMessages.push({message, resolve, reject});
+            _wakeupHibernatingClient();
+        } else {
+            _sendMessage(message, resolve, reject);
         }
-        if (!client.connectionEstablished) {
-            reject('Db connection is not ready, please retry in some time');
-            return;
-        }
-        if (!isObject(message)) {
-            reject('Please provide valid Object');
-            return;
-        }
-        if (!isString(message.fn) || !(message.fn in COCO_DB_FUNCTIONS)) {
-            reject('please provide valid function name');
-            return;
-        }
-        const sequenceNumber = getId();
-        message.id = sequenceNumber;
-        ID_TO_RESOLVE_REJECT_MAP.set(sequenceNumber, {
-            resolve: resolve,
-            reject: reject
-        });
-        client.send(JSON.stringify(message));
     });
 }
 

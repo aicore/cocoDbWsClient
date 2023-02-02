@@ -8,6 +8,8 @@ const expect = chai.expect;
 
 let savedSetTimeoutFn = global.setTimeout;
 let savedClearTimeoutFn = global.clearTimeout;
+let savedSetIntervalFn = global.setInterval;
+let savedClearIntervalFn = global.clearInterval;
 function _awaits(timeMs) {
     return new Promise(resolve =>{
         savedSetTimeoutFn(resolve, timeMs);
@@ -20,6 +22,8 @@ describe('Ut for client', function () {
         mockedFunctions.wsEvents.raiseOpenEventOnCreate = true;
         global.setTimeout = savedSetTimeoutFn;
         global.clearTimeout = savedClearTimeoutFn;
+        global.setInterval = savedSetIntervalFn;
+        global.clearInterval = savedClearIntervalFn;
     });
     it('should pass', async function () {
         let isExceptionOccurred = false;
@@ -269,6 +273,227 @@ describe('Ut for client', function () {
         await _mockConnectionClose([1, 500, 1000]);
 
         await initPromise;
+        await close();
+    });
+
+    it('should start hibernate timers and clear it on closed', async function () {
+        const TIMER_ID = "mockIntervalHibernate";
+        let mockIntervalTime = 0, clearIntervalCalled = false;
+        global.setInterval = function (cb, timeoutms) {
+            mockIntervalTime = timeoutms;
+            return TIMER_ID;
+        };
+        global.clearInterval = function (timerid) {
+            clearIntervalCalled = true;
+            expect(timerid).eq(TIMER_ID);
+        };
+        await init('wss://hello', 'word');
+        expect(mockIntervalTime).eq(8000);
+        expect(clearIntervalCalled).eq(false);
+
+        await close();
+        expect(clearIntervalCalled).eq(true);
+    });
+
+    it('should not start hibernate timers till connection is established', async function () {
+        mockedFunctions.wsEvents.raiseOpenEventOnCreate = false;
+        let timerCalled = false;
+        global.setInterval = function (cb, timeoutms) {
+            timerCalled = true;
+        };
+        let initPromise = init('wss://hello', 'word');
+        await _awaits(10);
+        expect(timerCalled).eq(false);
+
+        mockedFunctions.wsEvents.open();
+        await _awaits(10);
+
+        await initPromise;
+        expect(timerCalled).eq(true);
+        await close();
+    });
+
+    it('should hibernate after inactivity', async function () {
+        let timerCalled = false, hibernateCheckTimerFn, socketCloseCalled = false;
+        global.setInterval = function (cb, timeoutms) {
+            timerCalled = true;
+            hibernateCheckTimerFn = cb;
+        };
+        await init('wss://hello', 'word');
+        let savedClose = mockedFunctions.wsEvents.close;
+        mockedFunctions.wsEvents.close = function () {
+            socketCloseCalled = true;
+            savedClose();
+        };
+        expect(timerCalled).eq(true);
+
+        // now call hibernate check simulating advancing time
+        hibernateCheckTimerFn();
+        await _awaits(10);
+        // we will not close connection as at the first check, the socket establish itself is an activity
+        expect(socketCloseCalled).eq(false);
+
+        hibernateCheckTimerFn();
+        await _awaits(10);
+        // no activity happened on next activity check interval, so will close.
+        expect(socketCloseCalled).eq(true);
+
+        await close();
+    });
+
+    function _mockSendMessageResponse(id) {
+        __receiveMessage(JSON.stringify({
+            id,
+            response: {
+                hello: 'world'
+            }
+        }));
+    }
+
+    it('should not hibernate if activity on socket', async function () {
+        let timerCalled = false, hibernateCheckTimerFn, socketCloseCalled = false;
+        global.setInterval = function (cb, timeoutms) {
+            timerCalled = true;
+            hibernateCheckTimerFn = cb;
+        };
+        await init('wss://hello', 'word');
+        let savedClose = mockedFunctions.wsEvents.close;
+        mockedFunctions.wsEvents.close = function () {
+            socketCloseCalled = true;
+            savedClose();
+        };
+        mockedFunctions.wsEvents.send = function (message) {
+            _mockSendMessageResponse(JSON.parse(message).id);
+        };
+        expect(timerCalled).eq(true);
+
+        // now call hibernate check simulating advancing time
+        hibernateCheckTimerFn();
+        await _awaits(10);
+        // we will not close connection as at the first check, the socket establish itself is an activity
+        expect(socketCloseCalled).eq(false);
+
+        await sendMessage({
+            fn: COCO_DB_FUNCTIONS.hello
+        });
+        hibernateCheckTimerFn();
+        await _awaits(10);
+        // send activity, so we wont hibernate.
+        expect(socketCloseCalled).eq(false);
+
+        hibernateCheckTimerFn();
+        await _awaits(10);
+        // no activity, hibernate.
+        expect(socketCloseCalled).eq(true);
+
+        await close();
+    });
+
+    it('should exit hibernation when send message is triggered', async function () {
+        let timerCalled = false, hibernateCheckTimerFn;
+        global.setInterval = function (cb, timeoutms) {
+            timerCalled = true;
+            hibernateCheckTimerFn = cb;
+        };
+        mockedFunctions.wsEvents.send = function (message) {
+            _mockSendMessageResponse(JSON.parse(message).id);
+        };
+
+        await init('wss://hello', 'word');
+        expect(timerCalled).eq(true);
+
+        mockedFunctions.wsEvents.openCalled = false;
+        // now call hibernate check simulating advancing time
+        hibernateCheckTimerFn();
+        await _awaits(10);
+        hibernateCheckTimerFn();
+        await _awaits(10);
+        expect(mockedFunctions.wsEvents.closeCalled).eq(true);
+        expect(mockedFunctions.wsEvents.openCalled).eq(false);
+
+        mockedFunctions.wsEvents.closeCalled = false;
+        let response = await sendMessage({
+            fn: COCO_DB_FUNCTIONS.hello
+        });
+        // send activity, so we reestablish connection
+        expect(mockedFunctions.wsEvents.openCalled).eq(true);
+        // we should still get response
+        expect(response.hello).eq("world");
+
+        hibernateCheckTimerFn();
+        await _awaits(10);
+        // the previous send activity, dont hibernate.
+        expect(mockedFunctions.wsEvents.closeCalled).eq(false);
+
+        hibernateCheckTimerFn();
+        await _awaits(10);
+        // no activity, hibernate.
+        expect(mockedFunctions.wsEvents.closeCalled).eq(true);
+
+        await close();
+    });
+
+    it('should not hibernate if responses are pending', async function () {
+        let timerCalled = false, hibernateCheckTimerFn;
+        global.setInterval = function (cb, timeoutms) {
+            timerCalled = true;
+            hibernateCheckTimerFn = cb;
+        };
+        let savedMessage;
+        mockedFunctions.wsEvents.send = function (message) {
+            // swallow send, dont respond
+            savedMessage = message;
+        };
+
+        mockedFunctions.wsEvents.closeCalled = false;
+        await init('wss://hello', 'word');
+        expect(mockedFunctions.wsEvents.openCalled).eq(true);
+        expect(timerCalled).eq(true);
+
+        // now send an event that will never be resolved
+        sendMessage({
+            fn: COCO_DB_FUNCTIONS.hello
+        });
+
+        // now call hibernate check simulating advancing time. wont hibernate as havent got a response yet
+        for(let i=0; i<10; i++){
+            hibernateCheckTimerFn();
+            await _awaits(10);
+            expect(mockedFunctions.wsEvents.closeCalled).eq(false);
+        }
+
+        // now respond
+        _mockSendMessageResponse(JSON.parse(savedMessage).id);
+        await _awaits(10);
+
+        // will hibernate on next timer check as no activity in last time period. receive doesnt count
+        hibernateCheckTimerFn();
+        await _awaits(10);
+        expect(mockedFunctions.wsEvents.closeCalled).eq(true);
+
+        // now send a message to bring back frmo hibernation
+        mockedFunctions.wsEvents.closeCalled = mockedFunctions.wsEvents.openCalled = false;
+        let sendPromise = sendMessage({
+            fn: COCO_DB_FUNCTIONS.hello
+        });
+        await _awaits(100);
+        _mockSendMessageResponse(JSON.parse(savedMessage).id);
+        let response = await sendPromise;
+        // send activity, so we reestablish connection
+        expect(mockedFunctions.wsEvents.openCalled).eq(true);
+        // we should still get response
+        expect(response.hello).eq("world");
+
+        hibernateCheckTimerFn();
+        await _awaits(10);
+        // the previous send activity, dont hibernate.
+        expect(mockedFunctions.wsEvents.closeCalled).eq(false);
+
+        hibernateCheckTimerFn();
+        await _awaits(10);
+        // no activity, hibernate.
+        expect(mockedFunctions.wsEvents.closeCalled).eq(true);
+
         await close();
     });
 });

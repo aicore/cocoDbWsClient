@@ -9,9 +9,15 @@ let mockedFunctions = {
 
         on(event, callback) {
             if(event ==='close'){
-                mockedFunctions.wsEvents.close = callback;
+                mockedFunctions.wsEvents.close = function (...args) {
+                    mockedFunctions.wsEvents.closeCalled = true;
+                    callback(...args);
+                };
             } else if(event ==='open'){
-                mockedFunctions.wsEvents.open = callback;
+                mockedFunctions.wsEvents.open = function (...args) {
+                    mockedFunctions.wsEvents.openCalled = true;
+                    callback(...args);
+                };
                 if(mockedFunctions.wsEvents.raiseOpenEventOnCreate){
                     setTimeout(mockedFunctions.wsEvents.open, 10);
                 }
@@ -20,6 +26,7 @@ let mockedFunctions = {
 
         send(message) {
             console.log(message);
+            mockedFunctions.wsEvents.send && mockedFunctions.wsEvents.send(message);
         }
 
         terminate() {
