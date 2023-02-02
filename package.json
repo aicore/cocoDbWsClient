@@ -1,6 +1,6 @@
 {
   "name": "@aicore/cocodb-ws-client",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Websocket client for cocoDb",
   "main": "src/index.js",
   "type": "module",
@@ -47,14 +47,14 @@
   },
   "homepage": "https://github.com/aicore/cocoDbWsClient#readme",
   "devDependencies": {
-    "@commitlint/cli": "17.4.1",
-    "@commitlint/config-conventional": "17.4.0",
+    "@commitlint/cli": "17.4.2",
+    "@commitlint/config-conventional": "17.4.2",
     "c8": "7.12.0",
     "chai": "4.3.7",
     "cli-color": "2.0.3",
     "documentation": "14.0.1",
-    "eslint": "8.31.0",
-    "glob": "8.0.3",
+    "eslint": "8.33.0",
+    "glob": "8.1.0",
     "husky": "8.0.3",
     "mocha": "10.2.0"
   },
@@ -64,6 +64,6 @@
   },
   "optionalDependencies": {
     "bufferutil": "4.0.7",
-    "utf-8-validate": "5.0.10"
+    "utf-8-validate": "6.0.2"
   }
 }
