@@ -5,6 +5,7 @@ let client = null,
     cocoDBEndPointURL = null,
     cocoAuthKey = null,
     hibernateTimer = null,
+    bufferRequests = false,
     pendingSendMessages = [];
 const MAX_PENDING_SEND_BUFFER_SIZE = 2000;
 const WEBSOCKET_ENDPOINT_COCO_DB = '/ws/';
@@ -33,6 +34,7 @@ function _checkActivityForHibernation() {
         return;
     }
     if(!client || client.hibernating
+        || !client.connectionEstablished // cant hibernate if connection isnt already established/ is being establised
         || ID_TO_RESOLVE_REJECT_MAP.size > 0){ // if there are any pending responses, we cant hibernate
         return;
     }
@@ -41,6 +43,7 @@ function _checkActivityForHibernation() {
     client.hibernatingPromise = new Promise((resolve=>{
         client.hibernatingPromiseResolve = resolve;
     }));
+    bufferRequests = true;
     client.terminate();
 }
 
@@ -79,6 +82,7 @@ function _setupClientAndWaitForClose(connectedCb) {
         client.on('open', function open() {
             console.log('connected to server');
             client.connectionEstablished = true;
+            bufferRequests = false;
             connectedCb && connectedCb();
             _sendPendingMessages();
         });
@@ -214,6 +218,10 @@ export function close() {
     currentClient.closePromise = new Promise((resolve)=>{
         currentClient.userClosedConnection = true;
         currentClient.userClosedConnectionCB = function () {
+            for(let entry of pendingSendMessages){
+                entry.reject();
+            }
+            pendingSendMessages = [];
             resolve();
         };
         _cancelBackoffTimer(); // this is for if the connection is broken and, we are retrying the connection
@@ -276,13 +284,15 @@ function _sendPendingMessages() {
  */
 export function sendMessage(message) {
     return new Promise(function (resolve, reject) {
-        if(client&& client.hibernating){
+        if(bufferRequests){
             if(pendingSendMessages.length > MAX_PENDING_SEND_BUFFER_SIZE){
                 reject('Too many requests sent while waking up from hibernation');
                 return;
             }
             pendingSendMessages.push({message, resolve, reject});
-            _wakeupHibernatingClient();
+            if(client&& client.hibernating){
+                _wakeupHibernatingClient();
+            }
         } else {
             _sendMessage(message, resolve, reject);
         }

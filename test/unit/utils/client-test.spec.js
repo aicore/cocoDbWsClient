@@ -496,4 +496,110 @@ describe('Ut for client', function () {
 
         await close();
     });
+
+    it('should not buffer more than allowed number of requests while hibernating', async function () {
+        let timerCalled = false, hibernateCheckTimerFn, socketCloseCalled = false;
+        global.setInterval = function (cb, timeoutms) {
+            timerCalled = true;
+            hibernateCheckTimerFn = cb;
+        };
+        await init('wss://hello', 'word');
+        let savedClose = mockedFunctions.wsEvents.close;
+        mockedFunctions.wsEvents.close = function () {
+            socketCloseCalled = true;
+            savedClose();
+        };
+        expect(timerCalled).eq(true);
+
+        // now call hibernate check simulating advancing time
+        hibernateCheckTimerFn();
+        await _awaits(10);
+        // we will not close connection as at the first check, the socket establish itself is an activity
+        expect(socketCloseCalled).eq(false);
+
+        hibernateCheckTimerFn();
+        await _awaits(10);
+        // no activity happened on next activity check interval, so will close.
+        expect(socketCloseCalled).eq(true);
+
+        mockedFunctions.wsEvents.sendCalled = false;
+        let promises = [];
+        for(let i=0; i< 2020; i++){
+            promises.push(sendMessage({
+                fn: COCO_DB_FUNCTIONS.hello
+            }));
+        }
+        let error;
+        try{
+            await Promise.race(promises);
+        } catch (e) {
+            error = e;
+        }
+        expect(error).eq("Too many requests sent while waking up from hibernation");
+
+        await close();
+        expect(mockedFunctions.wsEvents.sendCalled).eq(false);
+
+        // as we closed the connection manually, all pending send requests should now reject
+        let allResults = await Promise.allSettled(promises);
+        for(let result of allResults){
+            expect(result.status).eq("rejected");
+        }
+    });
+
+    it('should not hibernate if reconnection is in progress', async function () {
+        mockedFunctions.wsEvents.raiseOpenEventOnCreate = false;
+        let timerCalled = false, hibernateCheckTimerFn;
+        global.setInterval = function (cb) {
+            hibernateCheckTimerFn = cb;
+            timerCalled = true;
+        };
+        let savedMessage;
+        mockedFunctions.wsEvents.send = function (message) {
+            savedMessage = message;
+        };
+        let initPromise = init('wss://hello', 'word');
+        await _awaits(10);
+        mockedFunctions.wsEvents.open();
+        await initPromise;
+        expect(timerCalled).eq(true);
+
+        hibernateCheckTimerFn();
+        await _awaits(10);
+        hibernateCheckTimerFn();
+        await _awaits(10);
+        expect(mockedFunctions.wsEvents.closeCalled).eq(true);
+        mockedFunctions.wsEvents.newSocketCreated = false;
+        mockedFunctions.wsEvents.closeCalled = false;
+
+        // send a message to restart connection
+        let sendPromise = sendMessage({
+            fn: COCO_DB_FUNCTIONS.hello
+        });
+        await _awaits(10);
+        expect(mockedFunctions.wsEvents.newSocketCreated).eq(true);
+
+        // will not hibernate till the connection moved to open or close state.
+        hibernateCheckTimerFn();
+        await _awaits(10);
+        hibernateCheckTimerFn();
+        await _awaits(10);
+        expect(mockedFunctions.wsEvents.closeCalled).eq(false);
+
+        // move to open state
+        mockedFunctions.wsEvents.open();
+        await _awaits(10);
+        _mockSendMessageResponse(JSON.parse(savedMessage).id);
+        await sendPromise;
+
+        // will not it should hibernate as there are no pending requests and connection established.
+        hibernateCheckTimerFn();
+        await _awaits(10);
+        expect(mockedFunctions.wsEvents.closeCalled).eq(false);
+        hibernateCheckTimerFn();
+        await _awaits(10);
+        expect(mockedFunctions.wsEvents.closeCalled).eq(true);
+
+        await close();
+    });
 });
