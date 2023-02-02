@@ -5,7 +5,7 @@ let client = null,
     cocoDBEndPointURL = null,
     cocoAuthKey = null;
 const WEBSOCKET_ENDPOINT_COCO_DB = '/ws/';
-const ID_TO_RESOLVE_REJECT_MAP = {};
+const ID_TO_RESOLVE_REJECT_MAP = new Map();
 const CONNECT_BACKOFF_TIME_MS = [1, 500, 1000, 3000, 5000, 10000, 20000];
 let id = 0;
 
@@ -51,10 +51,9 @@ function _setupClientAndWaitForClose(connectedCb) {
         function _connectionTerminated(reason) {
             console.log(reason);
             client.connectionEstablished = false;
-            for (let sequenceNumber in ID_TO_RESOLVE_REJECT_MAP) {
-                let rejectHandler = ID_TO_RESOLVE_REJECT_MAP[sequenceNumber].reject;
-                rejectHandler(reason);
-                delete ID_TO_RESOLVE_REJECT_MAP[sequenceNumber];
+            for (let [sequenceNumber, handler] of ID_TO_RESOLVE_REJECT_MAP) {
+                handler.reject(reason);
+                ID_TO_RESOLVE_REJECT_MAP.delete(sequenceNumber);
             }
             resolve();
         }
@@ -202,10 +201,10 @@ export function sendMessage(message) {
         }
         const sequenceNumber = getId();
         message.id = sequenceNumber;
-        ID_TO_RESOLVE_REJECT_MAP[sequenceNumber] = {
+        ID_TO_RESOLVE_REJECT_MAP.set(sequenceNumber, {
             resolve: resolve,
             reject: reject
-        };
+        });
         client.send(JSON.stringify(message));
     });
 }
@@ -225,15 +224,14 @@ export function __receiveMessage(rawData) {
         console.error('Server message does not have an Id');
         return false;
     }
-    const requestResolve = ID_TO_RESOLVE_REJECT_MAP[message.id];
-    if (!isObject(requestResolve)) {
+    const requestHandler = ID_TO_RESOLVE_REJECT_MAP.get(message.id);
+    if (!isObject(requestHandler)) {
         //TODO: Emit metrics
 
         console.error(`Client did not send message with Id ${message.id} to server`);
         return false;
     }
-    const response = message.response;
-    requestResolve.resolve(response);
-    delete ID_TO_RESOLVE_REJECT_MAP[message.id];
+    requestHandler.resolve(message.response);
+    ID_TO_RESOLVE_REJECT_MAP.delete(message.id);
     return true;
 }
