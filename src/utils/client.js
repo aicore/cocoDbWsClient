@@ -283,6 +283,8 @@ function _sendPendingMessages() {
  * @returns {Promise} A function that returns a promise.
  */
 export function sendMessage(message) {
+    // make a copy as the user may start modifying the object while we are sending it.
+    message = structuredClone(message);
     return new Promise(function (resolve, reject) {
         if(bufferRequests){
             if(pendingSendMessages.length > MAX_PENDING_SEND_BUFFER_SIZE){
