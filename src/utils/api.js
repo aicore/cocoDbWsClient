@@ -350,7 +350,8 @@ export function query(tableName, queryString, useIndexForFields = null, options=
             request: {
                 tableName: tableName,
                 queryString: queryString,
-                useIndexForFields: useIndexForFields
+                useIndexForFields: useIndexForFields,
+                options
             }
         });
 }
