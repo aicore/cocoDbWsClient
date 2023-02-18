@@ -86,6 +86,12 @@ It returns list of documents matching the queryObject
 
 *   `tableName` **[string][1]** The name of the table you want to query.
 *   `queryObject` **[Object][4]** This is the object that you want to query the table with.
+*   `options` **[Object][4]** Optional parameter to add pagination. (optional, default `{}`)
+
+    *   `options.pageOffset` **[number][6]** specify which row to start retrieving documents from. Eg: to get 10 documents from
+        the 100'th document, you should specify `pageOffset = 100` and `pageLimit = 10`
+    *   `options.pageLimit` **[number][6]** specify number of documents to retrieve. Eg: to get 10 documents from
+        the 100'th document, you should specify `pageOffset = 100` and `pageLimit = 10`
 
 Returns **[Promise][2]**&#x20;
 
@@ -97,6 +103,12 @@ It returns list of documents matching the queryObject after scanning the COCO DB
 
 *   `tableName` **[string][1]** The name of the table you want to query.
 *   `queryObject` **[Object][4]** This is the object that you want to query the table with. (optional, default `{}`)
+*   `options` **[Object][4]** Optional parameter to add pagination. (optional, default `{}`)
+
+    *   `options.pageOffset` **[number][6]** specify which row to start retrieving documents from. Eg: to get 10 documents from
+        the 100'th document, you should specify `pageOffset = 100` and `pageLimit = 10`
+    *   `options.pageLimit` **[number][6]** specify number of documents to retrieve. Eg: to get 10 documents from
+        the 100'th document, you should specify `pageOffset = 100` and `pageLimit = 10`
 
 Returns **[Promise][2]**&#x20;
 
@@ -154,7 +166,13 @@ It queries the database for a given table name and query string.
 
 *   `tableName` **[string][1]** The name of the table you want to query.
 *   `queryString` **[string][1]** The query string to be executed.
-*   `useIndexForFields` **[Array][6]<[string][1]>** This is an array of fields that you want to use the index for. (optional, default `null`)
+*   `useIndexForFields` **[Array][7]<[string][1]>** This is an array of fields that you want to use the index for. (optional, default `null`)
+*   `options` **[Object][4]** Optional parameter to add pagination. (optional, default `{}`)
+
+    *   `options.pageOffset` **[number][6]** specify which row to start retrieving documents from. Eg: to get 10 documents from
+        the 100'th document, you should specify `pageOffset = 100` and `pageLimit = 10`
+    *   `options.pageLimit` **[number][6]** specify number of documents to retrieve. Eg: to get 10 documents from
+        the 100'th document, you should specify `pageOffset = 100` and `pageLimit = 10`
 
 Returns **[Promise][2]** A promise
 
@@ -168,4 +186,6 @@ Returns **[Promise][2]** A promise
 
 [5]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Boolean
 
-[6]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array
+[6]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Number
+
+[7]: https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array

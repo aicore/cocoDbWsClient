@@ -163,9 +163,14 @@ export function createIndex(tableName, jsonField, dataType, isUnique, isNotNull)
  * It returns list of documents matching the queryObject
  * @param {string} tableName - The name of the table you want to query.
  * @param{Object} queryObject - This is the object that you want to query the table with.
+ * @param {Object} options Optional parameter to add pagination.
+ * @param {number} options.pageOffset specify which row to start retrieving documents from. Eg: to get 10 documents from
+ * the 100'th document, you should specify `pageOffset = 100` and `pageLimit = 10`
+ * @param {number} options.pageLimit specify number of documents to retrieve. Eg: to get 10 documents from
+ * the 100'th document, you should specify `pageOffset = 100` and `pageLimit = 10`
  * @returns {Promise}
  */
-export function getFromIndex(tableName, queryObject) {
+export function getFromIndex(tableName, queryObject, options= {}) {
     if (isStringEmpty(tableName)) {
         throw new Error('Please provide valid table name');
     }
@@ -177,7 +182,8 @@ export function getFromIndex(tableName, queryObject) {
             fn: COCO_DB_FUNCTIONS.getFromIndex,
             request: {
                 tableName: tableName,
-                queryObject: queryObject
+                queryObject: queryObject,
+                options
             }
         });
 }
@@ -186,9 +192,14 @@ export function getFromIndex(tableName, queryObject) {
  * It returns list of documents matching the queryObject after scanning the COCO DB
  * @param {string} tableName - The name of the table you want to query.
  * @param{Object} queryObject - This is the object that you want to query the table with.
+ * @param {Object} options Optional parameter to add pagination.
+ * @param {number} options.pageOffset specify which row to start retrieving documents from. Eg: to get 10 documents from
+ * the 100'th document, you should specify `pageOffset = 100` and `pageLimit = 10`
+ * @param {number} options.pageLimit specify number of documents to retrieve. Eg: to get 10 documents from
+ * the 100'th document, you should specify `pageOffset = 100` and `pageLimit = 10`
  * @returns {Promise}
  */
-export function getFromNonIndex(tableName, queryObject = {}) {
+export function getFromNonIndex(tableName, queryObject = {}, options= {}) {
     if (isStringEmpty(tableName)) {
         throw new Error('Please provide valid table name');
     }
@@ -197,7 +208,8 @@ export function getFromNonIndex(tableName, queryObject = {}) {
             fn: COCO_DB_FUNCTIONS.getFromNonIndex,
             request: {
                 tableName: tableName,
-                queryObject: queryObject
+                queryObject: queryObject,
+                options
             }
         });
 }
@@ -307,9 +319,14 @@ export function update(tableName, documentId, document) {
  * @param {string} tableName - The name of the table you want to query.
  * @param {string} queryString - The query string to be executed.
  * @param {Array<string>}[useIndexForFields=null] - This is an array of fields that you want to use the index for.
+ * @param {Object} options Optional parameter to add pagination.
+ * @param {number} options.pageOffset specify which row to start retrieving documents from. Eg: to get 10 documents from
+ * the 100'th document, you should specify `pageOffset = 100` and `pageLimit = 10`
+ * @param {number} options.pageLimit specify number of documents to retrieve. Eg: to get 10 documents from
+ * the 100'th document, you should specify `pageOffset = 100` and `pageLimit = 10`
  * @returns {Promise}A promise
  */
-export function query(tableName, queryString, useIndexForFields = null) {
+export function query(tableName, queryString, useIndexForFields = null, options= {}) {
     if (isStringEmpty(tableName)) {
         throw new Error('Please provide valid table name');
     }
@@ -322,7 +339,8 @@ export function query(tableName, queryString, useIndexForFields = null) {
                 fn: COCO_DB_FUNCTIONS.query,
                 request: {
                     tableName: tableName,
-                    queryString: queryString
+                    queryString: queryString,
+                    options
                 }
             });
     }
