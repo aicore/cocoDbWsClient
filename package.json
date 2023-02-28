@@ -1,6 +1,6 @@
 {
   "name": "@aicore/cocodb-ws-client",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "description": "Websocket client for cocoDb",
   "main": "src/index.js",
   "type": "module",
