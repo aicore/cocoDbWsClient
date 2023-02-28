@@ -291,9 +291,11 @@ export function mathAdd(tableName, documentId, jsonFieldsIncrements) {
  * @param {string} tableName - The name of the table to update the document in.
  * @param {string} documentId - The id of the document to update.
  * @param {Object}document - The document to be updated.
+ * @param {string} [condition] - Optional coco query condition of the form "$.cost<35" that must be satisfied
+ * for update to happen. See query API for more details on how to write coco query strings.
  * @returns {Promise} A promise.
  */
-export function update(tableName, documentId, document) {
+export function update(tableName, documentId, document, condition) {
     if (isStringEmpty(tableName)) {
         throw new Error('Please provide valid table name');
     }
@@ -309,7 +311,8 @@ export function update(tableName, documentId, document) {
             request: {
                 tableName: tableName,
                 documentId: documentId,
-                document: document
+                document: document,
+                condition
             }
         });
 }

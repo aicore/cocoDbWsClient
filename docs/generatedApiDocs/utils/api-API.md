@@ -155,6 +155,8 @@ Returns **[Promise][2]** A promise.
 *   `tableName` **[string][1]** The name of the table to update the document in.
 *   `documentId` **[string][1]** The id of the document to update.
 *   `document` **[Object][4]** The document to be updated.
+*   `condition` **[string][1]?** Optional coco query condition of the form "$.cost<35" that must be satisfied
+    for update to happen. See query API for more details on how to write coco query strings.
 
 Returns **[Promise][2]** A promise.
 

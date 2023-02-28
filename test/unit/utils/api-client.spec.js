@@ -463,9 +463,26 @@ describe('api test for client', function () {
 
     });
 
-    it('deleteDocument  should pass for valid inputs', async function () {
+    it('update  should pass for valid inputs', async function () {
 
         const promise = update('x.y', '123', {hello: 'world'});
+        setTimeout(() => {
+            __receiveMessage(JSON.stringify({
+                id: '1',
+                response: {
+                    isSuccess: true,
+                    documentId: '1234'
+                }
+            }));
+        }, 10);
+        const resp = await promise;
+        expect(resp.isSuccess).eql(true);
+        expect(resp.documentId).eql('1234');
+    });
+
+    it('conditional update should pass for valid inputs', async function () {
+
+        const promise = update('x.y', '123', {hello: 'world'}, "$.x<10");
         setTimeout(() => {
             __receiveMessage(JSON.stringify({
                 id: '1',
