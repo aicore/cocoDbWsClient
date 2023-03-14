@@ -47,20 +47,20 @@
   },
   "homepage": "https://github.com/aicore/cocoDbWsClient#readme",
   "devDependencies": {
-    "@commitlint/cli": "17.4.3",
-    "@commitlint/config-conventional": "17.4.3",
+    "@commitlint/cli": "17.4.4",
+    "@commitlint/config-conventional": "17.4.4",
     "c8": "7.13.0",
     "chai": "4.3.7",
     "cli-color": "2.0.3",
     "documentation": "14.0.1",
-    "eslint": "8.34.0",
+    "eslint": "8.36.0",
     "glob": "9.3.0",
     "husky": "8.0.3",
     "mocha": "10.2.0"
   },
   "dependencies": {
     "@aicore/libcommonutils": "1.0.19",
-    "ws": "8.12.1"
+    "ws": "8.13.0"
   },
   "optionalDependencies": {
     "bufferutil": "4.0.7",
