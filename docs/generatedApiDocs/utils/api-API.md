@@ -120,6 +120,8 @@ Returns **[Promise][2]**&#x20;
 
 *   `tableName` **[string][1]** The name of the table you want to delete the document from.
 *   `documentId` **[string][1]** The id of the document to delete.
+*   `condition` **[string][1]?** Optional coco query condition of the form "$.cost<35" that must be satisfied
+    for delete to happen. See query API for more details on how to write coco query strings.
 
 Returns **[Promise][2]** A promise.
 

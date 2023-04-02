@@ -424,6 +424,21 @@ describe('api test for client', function () {
         expect(resp.isSuccess).eql(true);
     });
 
+    it('deleteDocument with condition should pass for valid inputs', async function () {
+
+        const promise = deleteDocument('x.y', '123', "$.x=10");
+        setTimeout(() => {
+            __receiveMessage(JSON.stringify({
+                id: '1',
+                response: {
+                    isSuccess: true
+                }
+            }));
+        }, 10);
+        const resp = await promise;
+        expect(resp.isSuccess).eql(true);
+    });
+
 
     it('update  should fail if table name is invalid', async function () {
         let isExceptionOccurred = false;
