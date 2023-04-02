@@ -11,7 +11,7 @@ import {
     deleteDb,
     deleteTable,
     put,
-    createIndex, getFromIndex, getFromNonIndex, deleteDocument, update, mathAdd
+    createIndex, getFromIndex, getFromNonIndex, deleteDocument, deleteDocuments, update, mathAdd
 } from "../../../src/index.js";
 import {__receiveMessage} from "../../../src/utils/client.js";
 import {query} from "../../../src/utils/api.js";
@@ -427,6 +427,59 @@ describe('api test for client', function () {
     it('deleteDocument with condition should pass for valid inputs', async function () {
 
         const promise = deleteDocument('x.y', '123', "$.x=10");
+        setTimeout(() => {
+            __receiveMessage(JSON.stringify({
+                id: '1',
+                response: {
+                    isSuccess: true
+                }
+            }));
+        }, 10);
+        const resp = await promise;
+        expect(resp.isSuccess).eql(true);
+    });
+
+    it('deleteDocuments  should fail if table name is invalid', async function () {
+        let isExceptionOccurred = false;
+        try {
+            await deleteDocuments('', '123');
+        } catch (e) {
+            expect(e.toString()).eql('Error: Please provide valid table name');
+            isExceptionOccurred = true;
+        }
+        expect(isExceptionOccurred).eql(true);
+
+    });
+    it('deleteDocuments  should fail if query string is empty', async function () {
+        let isExceptionOccurred = false;
+        try {
+            await deleteDocuments('x.y', '');
+        } catch (e) {
+            expect(e.toString()).eql('Error: Please provide valid queryString');
+            isExceptionOccurred = true;
+        }
+        expect(isExceptionOccurred).eql(true);
+
+    });
+
+    it('deleteDocuments  should pass for valid inputs', async function () {
+
+        const promise = deleteDocuments('x.y', 'x=2');
+        setTimeout(() => {
+            __receiveMessage(JSON.stringify({
+                id: '1',
+                response: {
+                    isSuccess: true
+                }
+            }));
+        }, 10);
+        const resp = await promise;
+        expect(resp.isSuccess).eql(true);
+    });
+
+    it('deleteDocument with index fields should pass for valid inputs', async function () {
+
+        const promise = deleteDocuments('x.y', 'x=2', ['x', 'y']);
         setTimeout(() => {
             __receiveMessage(JSON.stringify({
                 id: '1',

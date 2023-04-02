@@ -25,6 +25,7 @@ export {
     put,
     mathAdd,
     deleteDocument,
+    deleteDocuments,
     deleteDb,
     getFromIndex,
     createIndex,
