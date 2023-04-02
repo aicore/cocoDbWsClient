@@ -219,9 +219,11 @@ export function getFromNonIndex(tableName, queryObject = {}, options= {}) {
  * > This function deletes a document from a table
  * @param {string} tableName - The name of the table you want to delete the document from.
  * @param {string} documentId - The id of the document to delete.
+ * @param {string} [condition] - Optional coco query condition of the form "$.cost<35" that must be satisfied
+ * for delete to happen. See query API for more details on how to write coco query strings.
  * @returns {Promise} A promise.
  */
-export function deleteDocument(tableName, documentId) {
+export function deleteDocument(tableName, documentId, condition) {
     if (isStringEmpty(tableName)) {
         throw new Error('Please provide valid table name');
     }
@@ -233,7 +235,8 @@ export function deleteDocument(tableName, documentId) {
             fn: COCO_DB_FUNCTIONS.deleteDocument,
             request: {
                 tableName: tableName,
-                documentId: documentId
+                documentId: documentId,
+                condition
             }
         });
 }
