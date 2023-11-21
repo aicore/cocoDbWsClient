@@ -47,8 +47,8 @@
   },
   "homepage": "https://github.com/aicore/cocoDbWsClient#readme",
   "devDependencies": {
-    "@commitlint/cli": "17.6.5",
-    "@commitlint/config-conventional": "17.6.5",
+    "@commitlint/cli": "18.4.3",
+    "@commitlint/config-conventional": "18.4.3",
     "c8": "7.14.0",
     "chai": "4.3.7",
     "cli-color": "2.0.3",
