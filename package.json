@@ -50,17 +50,17 @@
     "@commitlint/cli": "18.4.3",
     "@commitlint/config-conventional": "18.4.3",
     "c8": "7.14.0",
-    "chai": "4.3.7",
+    "chai": "4.3.10",
     "cli-color": "2.0.3",
     "documentation": "14.0.2",
-    "eslint": "8.42.0",
+    "eslint": "8.56.0",
     "glob": "9.3.5",
     "husky": "8.0.3",
     "mocha": "10.2.0"
   },
   "dependencies": {
     "@aicore/libcommonutils": "1.0.20",
-    "ws": "8.13.0"
+    "ws": "8.16.0"
   },
   "optionalDependencies": {
     "bufferutil": "4.0.7",
