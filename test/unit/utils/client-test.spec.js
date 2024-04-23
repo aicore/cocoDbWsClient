@@ -1,7 +1,7 @@
 /*global describe, it, beforeEach, afterEach*/
 import mockedFunctions from "../setupmocks.js";
 import {__receiveMessage, close, init, sendMessage} from "../../../src/utils/client.js";
-import chai from "chai";
+import * as chai from "chai";
 import {COCO_DB_FUNCTIONS} from "@aicore/libcommonutils";
 
 const expect = chai.expect;
