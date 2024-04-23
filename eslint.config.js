@@ -13,7 +13,12 @@ export default {
         globals: {
             process: true,    // Assume process is a global variable (specific to Node.js)
             setTimeout: true,  // Assume setTimeout is a global variable
-            console: true
+            console: true,
+            global: true,
+            structuredClone: true,
+            clearInterval: true,
+            setInterval:true,
+            clearTimeout:true
         }
     },
     rules: {
