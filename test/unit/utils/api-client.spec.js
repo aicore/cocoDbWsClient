@@ -1,6 +1,6 @@
 /*global describe, it, beforeEach, afterEach*/
 import mockedFunctions from "../setupmocks.js";
-import chai from "chai";
+import * as chai from "chai";
 import {
     hello,
     init,
