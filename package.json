@@ -60,7 +60,7 @@
   },
   "dependencies": {
     "@aicore/libcommonutils": "1.0.20",
-    "ws": "8.16.0"
+    "ws": "8.17.1"
   },
   "optionalDependencies": {
     "bufferutil": "4.0.8",
