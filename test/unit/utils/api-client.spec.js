@@ -619,6 +619,20 @@ describe('api test for client', function () {
         expect(resp.isSuccess).eql(true);
     });
 
+    it('mathAdd should pass with valid condition', async function () {
+        const promise = mathAdd('x.y', '123', {hello: 1}, '$.count > 10');
+        setTimeout(() => {
+            __receiveMessage(JSON.stringify({
+                id: '1',
+                response: {
+                    isSuccess: true
+                }
+            }));
+        }, 10);
+        const resp = await promise;
+        expect(resp.isSuccess).eql(true);
+    });
+
 
     it('query  should fail if table name is invalid', async function () {
         let isExceptionOccurred = false;
