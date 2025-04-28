@@ -288,13 +288,16 @@ export function deleteTable(tableName) {
 
 /**
  * do mathematical addition on given json fields by given values in jsonFieldsIncrements
+ * conditional operation is also supported.
  * @param {string} tableName - The name of the table you want to update.
  * @param {string} documentId - The document id of the document you want to update.
  * @param {Object} jsonFieldsIncrements - A JSON object with the fields to increment and the amount to
  * increment them by.
+ * @param {string} [condition] - Optional coco query condition of the form "$.cost<35" that must be satisfied
+ * for update to happen. See query API for more details on how to write coco query strings.
  * @returns {Promise} A promise.
  */
-export function mathAdd(tableName, documentId, jsonFieldsIncrements) {
+export function mathAdd(tableName, documentId, jsonFieldsIncrements, condition) {
     if (isStringEmpty(tableName)) {
         throw new Error('Please provide valid table name');
     }
@@ -310,7 +313,8 @@ export function mathAdd(tableName, documentId, jsonFieldsIncrements) {
             request: {
                 tableName: tableName,
                 documentId: documentId,
-                jsonFieldsIncrements: jsonFieldsIncrements
+                jsonFieldsIncrements: jsonFieldsIncrements,
+                condition: condition
             }
         });
 }
