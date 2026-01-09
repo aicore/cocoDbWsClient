@@ -111,7 +111,6 @@ function _setupClientAndWaitForClose(connectedCb) {
             resolve();
         }
 
-        // ✅ THIS prevents the "Unhandled 'error' event" crash
         client.on('error', function (err) {
             // ECONNREFUSED, ENOTFOUND, TLS errors, etc. can land here
             _connectionTerminated(err);
@@ -151,13 +150,14 @@ function _cancelBackoffTimer() {
     }
 }
 
-async function _setupAndMaintainConnection(firstConnectionCb, neverConnectedCB) {
+async function _setupAndMaintainConnection(resolveOnFirstConnect, reject) {
     backoffTimer = null;
     function connected() {
         _resetBackoffTime();
-        if(firstConnectionCb){
-            firstConnectionCb("connected");
-            firstConnectionCb = null;
+        if(resolveOnFirstConnect){
+            resolveOnFirstConnect("connected");
+            resolveOnFirstConnect = null;
+            reject = null;
             // setup hibernate timer on first connection
             activityInHibernateInterval = 1;
             hibernateTimer = setInterval(_checkActivityForHibernation, INACTIVITY_TIME_FOR_HIBERNATE);
@@ -180,8 +180,8 @@ async function _setupAndMaintainConnection(firstConnectionCb, neverConnectedCB) 
     client && client.userClosedConnectionCB && client.userClosedConnectionCB();
     client = cocoDBEndPointURL = cocoAuthKey = null;
     id = 0;
-    if(neverConnectedCB){
-        neverConnectedCB(new Error("user Cancelled"));
+    if(reject){
+        reject(new Error("user Cancelled"));
     }
 }
 
