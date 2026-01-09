@@ -38,7 +38,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/aicore/template-nodejs.git"
+    "url": "git+https://github.com/aicore/cocoDbWsClient.git"
   },
   "author": "Charly, core.ai",
   "license": "AGPL-3.0-or-later",
