@@ -239,7 +239,7 @@ export function close() {
         currentClient.userClosedConnection = true;
         currentClient.userClosedConnectionCB = function () {
             for(let entry of pendingSendMessages){
-                entry.reject();
+                entry.reject(new Error('Connection closed'));
             }
             pendingSendMessages = [];
             resolve();
@@ -259,7 +259,7 @@ export function close() {
  * @returns {string} A function that increments the id variable and returns the new value as a hexadecimal string.
  */
 function getId() {
-    id++;
+    id++; // Will take about 300 years to run out at 1 million sustained tps to db with Number.MAX_SAFE_INTEGER
     return id.toString(16);
 }
 
@@ -304,7 +304,7 @@ function _sendPendingMessages() {
  */
 export function sendMessage(message) {
     // make a copy as the user may start modifying the object while we are sending it.
-    message = structuredClone(message);
+    message = JSON.parse(JSON.stringify(message)); // faster than structured clone for most cases
     return new Promise(function (resolve, reject) {
         if(bufferRequests){
             if(pendingSendMessages.length > MAX_PENDING_SEND_BUFFER_SIZE){
