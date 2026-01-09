@@ -34,6 +34,7 @@ function _checkActivityForHibernation() {
         return;
     }
     if(!client || client.hibernating
+        || client.userClosedConnection
         || !client.connectionEstablished // cant hibernate if connection isnt already established/ is being establised
         || ID_TO_RESOLVE_REJECT_MAP.size > 0){ // if there are any pending responses, we cant hibernate
         return;
