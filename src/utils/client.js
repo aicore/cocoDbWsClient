@@ -91,8 +91,18 @@ function _setupClientAndWaitForClose(connectedCb) {
             __receiveMessage(data);
         });
 
+        let terminated = false;
         function _connectionTerminated(reason) {
+            if (terminated) {
+                return;
+            }
+            terminated = true;
+
             console.log(reason);
+            // not set bufferRequests = true for unexpected failures.
+            // Real connection failures → reject immediately, don't buffer
+            // Hibernation → buffer and reconnect transparently
+
             client.connectionEstablished = false;
             for (let [sequenceNumber, handler] of ID_TO_RESOLVE_REJECT_MAP) {
                 handler.reject(reason);
@@ -100,11 +110,21 @@ function _setupClientAndWaitForClose(connectedCb) {
             }
             resolve();
         }
-        client.on('close', function () {
-            // https://websockets.spec.whatwg.org/#eventdef-websocket-error
-            // https://stackoverflow.com/questions/40084398/is-onclose-always-called-after-onerror-for-websocket
-            // we do not need to listen for error event as an error event is immediately followed by a close event.
-            _connectionTerminated('connection closed');
+
+        // ✅ THIS prevents the "Unhandled 'error' event" crash
+        client.on('error', function (err) {
+            // ECONNREFUSED, ENOTFOUND, TLS errors, etc. can land here
+            _connectionTerminated(err);
+        });
+
+        client.on('close', function (code, reasonBuf) {
+            // reasonBuf may be a Buffer in ws; keep it simple
+            _connectionTerminated(`connection closed (${code})`);
+        });
+
+        // Optional but useful: HTTP-level failures (proxies, 401, 403, 502...)
+        client.on('unexpected-response', function (req, res) {
+            _connectionTerminated(`unexpected-response: ${res.statusCode}`);
         });
     });
 }
