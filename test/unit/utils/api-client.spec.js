@@ -11,7 +11,8 @@ import {
     deleteDb,
     deleteTable,
     put,
-    createIndex, getFromIndex, getFromNonIndex, deleteDocument, deleteDocuments, update, mathAdd
+    createIndex, getFromIndex, getFromNonIndex, deleteDocument, deleteDocuments, update, mathAdd,
+    listDatabases, listTables, getTableIndexes
 } from "../../../src/index.js";
 import {__receiveMessage} from "../../../src/utils/client.js";
 import {query} from "../../../src/utils/api.js";
@@ -690,6 +691,83 @@ describe('api test for client', function () {
         const resp = await promise;
         expect(resp.isSuccess).eql(true);
         expect(resp.documents.length).eql(0);
+    });
+
+    it('listDatabases should pass', async function () {
+        const promise = listDatabases();
+        setTimeout(() => {
+            __receiveMessage(JSON.stringify({
+                id: '1',
+                response: {
+                    isSuccess: true,
+                    databases: ['test', 'mysql']
+                }
+            }));
+        }, 10);
+        const resp = await promise;
+        expect(resp.isSuccess).eql(true);
+        expect(resp.databases).to.include('test');
+        expect(resp.databases).to.include('mysql');
+    });
+
+    it('listTables should fail if databaseName is empty', async function () {
+        let isExceptionOccurred = false;
+        try {
+            await listTables('');
+        } catch (e) {
+            expect(e.toString()).eql('Error: Please provide valid databaseName');
+            isExceptionOccurred = true;
+        }
+        expect(isExceptionOccurred).eql(true);
+    });
+
+    it('listTables should pass', async function () {
+        const promise = listTables('test');
+        setTimeout(() => {
+            __receiveMessage(JSON.stringify({
+                id: '1',
+                response: {
+                    isSuccess: true,
+                    tables: ['customers', 'orders']
+                }
+            }));
+        }, 10);
+        const resp = await promise;
+        expect(resp.isSuccess).eql(true);
+        expect(resp.tables).to.include('customers');
+        expect(resp.tables).to.include('orders');
+    });
+
+    it('getTableIndexes should fail if tableName is empty', async function () {
+        let isExceptionOccurred = false;
+        try {
+            await getTableIndexes('');
+        } catch (e) {
+            expect(e.toString()).eql('Error: Please provide valid tableName');
+            isExceptionOccurred = true;
+        }
+        expect(isExceptionOccurred).eql(true);
+    });
+
+    it('getTableIndexes should pass', async function () {
+        const promise = getTableIndexes('test.customers');
+        setTimeout(() => {
+            __receiveMessage(JSON.stringify({
+                id: '1',
+                response: {
+                    isSuccess: true,
+                    indexes: [{
+                        indexName: 'PRIMARY',
+                        columnName: 'documentID',
+                        isPrimary: true
+                    }]
+                }
+            }));
+        }, 10);
+        const resp = await promise;
+        expect(resp.isSuccess).eql(true);
+        expect(resp.indexes.length).to.be.greaterThan(0);
+        expect(resp.indexes[0].indexName).eql('PRIMARY');
     });
 
 });

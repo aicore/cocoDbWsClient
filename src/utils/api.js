@@ -392,3 +392,51 @@ export function query(tableName, queryString, useIndexForFields = null, options=
         });
 }
 
+/**
+ * Lists all databases on the MySQL server.
+ * @example <caption>Sample usage</caption>
+ * const response = await listDatabases();
+ * console.log(response.databases); // ['mysql', 'information_schema', 'mydb']
+ * @returns {Promise<Object>} A promise resolving to {isSuccess: boolean, databases: string[]}
+ */
+export function listDatabases() {
+    return sendMessage({
+        fn: 'listDatabases',
+        request: {}
+    });
+}
+
+/**
+ * Lists all tables in a database.
+ * @param {string} databaseName - The name of the database
+ * @returns {Promise<Object>} A promise resolving to {isSuccess: boolean, tables: string[]}
+ */
+export function listTables(databaseName) {
+    if (isStringEmpty(databaseName)) {
+        throw new Error('Please provide valid databaseName');
+    }
+    return sendMessage({
+        fn: 'listTables',
+        request: {
+            databaseName: databaseName
+        }
+    });
+}
+
+/**
+ * Gets index information for a table.
+ * @param {string} tableName - The table name in database.tableName format
+ * @returns {Promise<Object>} A promise resolving to {isSuccess: boolean, indexes: IndexInfo[]}
+ */
+export function getTableIndexes(tableName) {
+    if (isStringEmpty(tableName)) {
+        throw new Error('Please provide valid tableName');
+    }
+    return sendMessage({
+        fn: 'getTableIndexes',
+        request: {
+            tableName: tableName
+        }
+    });
+}
+
