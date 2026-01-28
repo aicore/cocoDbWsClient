@@ -35,7 +35,10 @@ export {
     getFromNonIndex,
     hello,
     update,
-    query
+    query,
+    listDatabases,
+    listTables,
+    getTableIndexes
 
 } from './utils/api.js';
 

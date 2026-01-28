@@ -1,6 +1,22 @@
 import {WS} from "./WebSocket.js";
 import {isString, isObject, isStringEmpty, COCO_DB_FUNCTIONS} from "@aicore/libcommonutils";
 
+// Additional functions not yet in COCO_DB_FUNCTIONS from libcommonutils
+const ADDITIONAL_FUNCTIONS = {
+    listDatabases: 'listDatabases',
+    listTables: 'listTables',
+    getTableIndexes: 'getTableIndexes'
+};
+
+/**
+ * Checks if a function name is a valid cocodb function
+ * @param {string} fn - The function name to check
+ * @returns {boolean} True if the function is valid
+ */
+function isValidFunction(fn) {
+    return (fn in COCO_DB_FUNCTIONS) || (fn in ADDITIONAL_FUNCTIONS);
+}
+
 let client = null,
     cocoDBEndPointURL = null,
     cocoAuthKey = null,
@@ -277,7 +293,7 @@ function _sendMessage(message, resolve, reject) {
         reject('Please provide valid Object');
         return;
     }
-    if (!isString(message.fn) || !(message.fn in COCO_DB_FUNCTIONS)) {
+    if (!isString(message.fn) || !isValidFunction(message.fn)) {
         reject('please provide valid function name');
         return;
     }
