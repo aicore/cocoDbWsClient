@@ -770,4 +770,49 @@ describe('api test for client', function () {
         expect(resp.indexes[0].indexName).eql('PRIMARY');
     });
 
+    async function _captureSentMessage(apiCall) {
+        let sentMessage;
+        const saveSend = mockedFunctions.wsEvents.send;
+        mockedFunctions.wsEvents.send = function (message) {
+            sentMessage = JSON.parse(message);
+        };
+        const promise = apiCall();
+        setTimeout(() => {
+            __receiveMessage(JSON.stringify({
+                id: sentMessage.id,
+                response: {
+                    isSuccess: true,
+                    documents: []
+                }
+            }));
+        }, 10);
+        const resp = await promise;
+        mockedFunctions.wsEvents.send = saveSend;
+        expect(resp.isSuccess).eql(true);
+        return sentMessage;
+    }
+
+    it('getFromIndex should send orderByIndexedField option to server', async function () {
+        const orderBy = {field: 'count', direction: 'DESC'};
+        const sent = await _captureSentMessage(() => getFromIndex('x.y', {hello: 'world'},
+            {orderByIndexedField: orderBy, pageOffset: 0, pageLimit: 10}));
+        expect(sent.fn).eql('getFromIndex');
+        expect(sent.request.tableName).eql('x.y');
+        expect(sent.request.options.orderByIndexedField).eql(orderBy);
+        expect(sent.request.options.pageOffset).eql(0);
+        expect(sent.request.options.pageLimit).eql(10);
+    });
+
+    it('query should send orderByIndexedField option to server', async function () {
+        const orderBy = {field: 'count', direction: 'ASC'};
+        let sent = await _captureSentMessage(() => query('x.y', '$.x = 1', ['x'], {orderByIndexedField: orderBy}));
+        expect(sent.fn).eql('query');
+        expect(sent.request.useIndexForFields).eql(['x']);
+        expect(sent.request.options.orderByIndexedField).eql(orderBy);
+        // without useIndexForFields
+        sent = await _captureSentMessage(() => query('x.y', '$.x = 1', null, {orderByIndexedField: orderBy}));
+        expect(sent.fn).eql('query');
+        expect(sent.request.useIndexForFields).eql(undefined);
+        expect(sent.request.options.orderByIndexedField).eql(orderBy);
+    });
 });

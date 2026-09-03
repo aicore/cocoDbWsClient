@@ -168,6 +168,13 @@ export function createIndex(tableName, jsonField, dataType, isUnique, isNotNull)
  * the 100'th document, you should specify `pageOffset = 100` and `pageLimit = 10`
  * @param {number} options.pageLimit specify number of documents to retrieve. Eg: to get 10 documents from
  * the 100'th document, you should specify `pageOffset = 100` and `pageLimit = 10`
+ * @param {Object} [options.orderByIndexedField] optional sort order of the results. Sorting is only allowed on
+ * indexed fields (see `createIndex`); ordering on a non-indexed field fails with an `Unknown column` error. Ordering
+ * is index-backed (no filesort) when the WHERE clause uses the same index, Eg.
+ * `query(table, "$.count >= 0", ["count"], {orderByIndexedField: {field: "count", direction: "DESC"}})`; other
+ * combinations filesort the filtered subset, so keep those result sets small.
+ * @param {string} options.orderByIndexedField.field the indexed json field to sort on. Eg. `count` or `price.tax`
+ * @param {string} [options.orderByIndexedField.direction='ASC'] sort direction, `ASC` or `DESC`
  * @returns {Promise}
  */
 export function getFromIndex(tableName, queryObject, options= {}) {
@@ -360,6 +367,13 @@ export function update(tableName, documentId, document, condition) {
  * the 100'th document, you should specify `pageOffset = 100` and `pageLimit = 10`
  * @param {number} options.pageLimit specify number of documents to retrieve. Eg: to get 10 documents from
  * the 100'th document, you should specify `pageOffset = 100` and `pageLimit = 10`
+ * @param {Object} [options.orderByIndexedField] optional sort order of the results. Sorting is only allowed on
+ * indexed fields (see `createIndex`); ordering on a non-indexed field fails with an `Unknown column` error. Ordering
+ * is index-backed (no filesort) when the WHERE clause uses the same index, Eg.
+ * `query(table, "$.count >= 0", ["count"], {orderByIndexedField: {field: "count", direction: "DESC"}})`; other
+ * combinations filesort the filtered subset, so keep those result sets small.
+ * @param {string} options.orderByIndexedField.field the indexed json field to sort on. Eg. `count` or `price.tax`
+ * @param {string} [options.orderByIndexedField.direction='ASC'] sort direction, `ASC` or `DESC`
  * @returns {Promise}A promise
  */
 export function query(tableName, queryString, useIndexForFields = null, options= {}) {
